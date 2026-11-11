@@ -1,24 +1,27 @@
 # TV+ Studio
 
-Générateur d'affiches d'actualité pour TV+ Afrique.
+Générateur d'affiches TV+ Afrique — version 2, édition rapide.
 
-## Fonctionnalités
+## Fonctions principales
 
-- Pastille : catégorie, titre et mots-clés surlignés en jaune.
-- Alerte info : bandeau rouge, titre blanc.
-- Import et repositionnement de photos et remplacement du logo TV+.
-- Typographies Barlow, Barlow Semi Condensed et Barlow Condensed, plusieurs graisses.
-- Aperçu en direct et export PNG en 1080, 1200 ou 2048 pixels.
-- Interface responsive.
+- **Pastille** : saisir le titre une fois, puis cliquer directement sur les mots pour activer ou désactiver le surlignage jaune. Aucune étape « valider » supplémentaire.
+- **Alerte info** : bandeau rouge et titre blanc.
+- **Taille globale** : curseur de 55 % à 160 % ; ajustement automatique dans la zone disponible.
+- **Taille de certains mots ou expressions** : sélectionner « Régler la taille », cliquer sur plusieurs mots (ou sélectionner une expression directement dans le titre), puis choisir un pourcentage. La taille peut varier d'un mot à l'autre.
+- **Anti-chevauchement** : mise en page qui mesure la largeur et la hauteur de chaque ligne, ajuste le titre et limite son dessin à la zone réservée au-dessus du pied de page.
+- **Barlow** : Barlow, Barlow Semi Condensed, Barlow Condensed ; Bold / ExtraBold / Black.
+- **Image et logo** : import local, zoom, déplacement de la photographie par glisser, assombrissement, remplacement du logo.
+- **Export PNG** : 1080 × 1080, 1200 × 1200 ou 2048 × 2048.
+- **Interface compacte** : aperçus et commandes côte à côte sur ordinateur ; aperçu réduit sur mobile ; réglages secondaires repliés.
 
-## Déploiement
+## Déploiement Vercel
 
-Site statique : `index.html` est à la racine, sans commande de compilation. Les déploiements Vercel se déclenchent sur les changements du dépôt GitHub lié.
+Le site est statique. Vercel sert directement `index.html`. La branche GitHub `main` est associée aux déploiements de production.
 
-## Utilisation locale
+## Localement
 
-Ouvrir `index.html` dans un navigateur. Les polices Barlow nécessitent une connexion pour charger Google Fonts ; une police de repli existe.
+Ouvrir `index.html` dans un navigateur récent. Une connexion Internet permet le chargement de Barlow depuis Google Fonts ; une police de secours fonctionne hors connexion.
 
-## Première version
+## Confidentialité et limites
 
-Pas de comptes, de sauvegarde collaborative ni de liaison CMS. Le logo initial est un extrait des visuels fournis ; importer le logo officiel transparent pour un rendu définitif.
+Les photos, le texte et les exports restent dans le navigateur. Il n'existe pas encore de sauvegarde collaborative, de comptes utilisateurs ou de liaison directe au CMS. Le logo inclus provient du modèle fourni : remplacer par le PNG officiel pour des exports définitifs. Pour un titre exceptionnellement long, le texte se réduit fortement : l'interface avertit lorsque cela affecte sa lisibilité.
