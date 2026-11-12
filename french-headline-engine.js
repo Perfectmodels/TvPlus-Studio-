@@ -37,7 +37,7 @@
   function within(t){return [...t].length<=limit&&t.split(/\s+/).length<=wordLimit;}
   if(within(s))return {title:s,cut:false};
   // Prefer natural clause boundaries, not arbitrary character truncation.
-  for(const separator of [/;\s+/,/[,;]\s+(?:mais|alors que|tandis que|cependant)\s+/i,/\s+[—–]\s+/,/\s+(?:tandis que|alors que|dans le cadre de|dans les processus de|à l['’]occasion d['’]|au terme de|lors d['’]|au cours de)\s+/i]){
+  for(const separator of [/;\s+/,/,\s+(?=(?:le|la|les)\s+[A-ZÀ-ÖØ-Þ])/i,/[,;]\s+(?:mais|alors que|tandis que|cependant)\s+/i,/\s+[—–]\s+/,/\s+(?:tandis que|alors que|dans le cadre de|dans les processus de|à l['’]occasion d['’]|au terme de|lors d['’]|au cours de)\s+/i]){
    const sections=s.split(separator);
    if(sections.length>1&&sections[0].length>=30&&within(sections[0]))return {title:sections[0].trim(),cut:false};
   }
