@@ -167,10 +167,19 @@ dlg.innerHTML=`
   <label>Présentation supplémentaire (facultatif)
    <textarea id="studioCaptionIntro" rows="2" placeholder="Un contexte factuel, uniquement si nécessaire."></textarea>
   </label>
-  <label>Hashtags complémentaires
-   <input id="studioCaptionHashtags" maxlength="350" placeholder="#Gabon #CESEC #JacquesSima">
-   <small style="display:block;color:#90a9c5;margin:5px 0">#TVPlusAfrique et le hashtag du format sont ajoutés automatiquement.</small>
-  </label>
+  <div class="studio-hashtag-box">
+   <div class="studio-hashtag-head">
+    <div><strong>Hashtags de la publication</strong><small>Suggestions calculées depuis le titre, sans IA.</small></div>
+    <button type="button" id="studioGenerateHashtags">↻ Générer les hashtags</button>
+   </div>
+   <p class="studio-note">Les hashtags jaunes seront inclus dans la légende. Cliquez dessus pour les retirer ou les réactiver.</p>
+   <div id="studioHashtagSuggestions" class="studio-hashtag-suggestions" role="group" aria-label="Sélectionner les hashtags proposés"></div>
+   <div id="studioHashtagCount" class="studio-hashtag-count" role="status" aria-live="polite"></div>
+   <label>Ajouter des hashtags personnalisés
+    <input id="studioCaptionHashtags" maxlength="350" placeholder="#Gabon #CESEC #JacquesSima" autocomplete="off">
+    <small class="studio-hashtag-help">Séparez les hashtags par des espaces. #TVPlusAfrique et le hashtag du format sont toujours inclus.</small>
+   </label>
+  </div>
   <div class="studio-tool-subtitle">Aperçu de la légende · titre repris depuis l’affiche</div>
   <textarea id="studioCaptionPreview" rows="8" aria-label="Légende TV+ prête à copier avec gras Unicode" spellcheck="false"></textarea>
   <div class="studio-editorial-actions"><button id="studioCaptionRefresh" type="button">Régénérer depuis l’affiche</button><button id="studioCaptionCopy" class="studio-accent" type="button">Copier la légende</button></div>
@@ -227,6 +236,20 @@ style.textContent=`
 .studio-shortener label{margin-bottom:9px}
 .studio-shortener .studio-editorial-actions{margin:7px 0}
 #studioShortenStatus{min-height:16px}
+
+.studio-hashtag-box{border:1px solid #394e69;border-radius:12px;padding:13px;margin:13px 0;background:#132239}
+.studio-hashtag-head{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.studio-hashtag-head strong{font-size:13px;font-weight:850;color:#f3f7ff;display:block}
+.studio-hashtag-head small{display:block;font-size:11px;color:#9eb3c8;margin-top:4px}
+.studio-hashtag-head button{font-size:12px;font-weight:800;color:#ffe5a1;border:1px solid #856727;background:#30271c;padding:8px 10px;border-radius:8px;cursor:pointer}
+.studio-hashtag-suggestions{display:flex;flex-wrap:wrap;gap:7px;margin:11px 0;min-height:32px;align-items:center}
+.studio-hashtag-suggestions button{border:1px solid #526680;background:#182a43;color:#aabbd1;border-radius:100px;padding:8px 11px;min-height:34px;font:800 12px Barlow,Arial,sans-serif;cursor:pointer;overflow-wrap:anywhere;max-width:100%}
+.studio-hashtag-suggestions button[aria-pressed="true"]{background:#ffbd0d;border-color:#ffbd0d;color:#121b2a}
+.studio-hashtag-suggestions button:focus-visible{outline:2px solid #e3c44c;outline-offset:2px}
+.studio-hashtag-count{font-size:11px;color:#a9bfd5;margin-bottom:10px}
+.studio-hashtag-help{display:block;font-size:10px;color:#92a9c2;margin-top:6px;font-weight:450}
+.studio-hashtag-box label{margin-bottom:0}
+
 
 #studioCaptionPreview{min-height:145px}
 .studio-form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
@@ -303,17 +326,134 @@ const titles={
  "60secondes":"📺 𝗧𝗩+ | 𝗘𝗡 𝟲𝟬 𝗦𝗘𝗖𝗢𝗡𝗗𝗘𝗦"
 };
 const whatsapp="📲 𝗦𝘂𝗶𝘃𝗲𝘇-𝗻𝗼𝘂𝘀 𝘀𝘂𝗿 𝗪𝗵𝗮𝘁𝘀𝗔𝗽𝗽 https://l.tvplusafrique.com/xw7b";
-function uniqueTags(type,extra){
+function uniqueTags(type,extra,automatic=[]){
  const defaults=["#TVPlusAfrique"];
  if(type==="alerte")defaults.push("#AlerteInfo");
  if(type==="reportage")defaults.push("#Reportage");
  if(type==="60secondes")defaults.push("#60Secondes");
- const tags=[...defaults,...String(extra||"").split(/[\s,;]+/).map(x=>x.trim()).filter(Boolean)];
- const found=new Set();return tags.filter(tag=>{
-  if(!/^#[^\s#]+$/u.test(tag))return false;
-  const key=tag.toLocaleLowerCase("fr");
-  if(found.has(key))return false;found.add(key);return true;
+ const manual=String(extra||"").split(/[\s,;]+/).filter(Boolean).map(tag=>tag.startsWith("#")?tag:"#"+tag);
+ const all=[...defaults,...automatic,...manual];
+ const found=new Set();
+ return all.filter(tag=>{
+  if(!/^#[A-Za-z][A-Za-z0-9_]{1,39}$/.test(tag))return false;
+  const key=tag.toLowerCase();
+  if(found.has(key))return false;
+  found.add(key);return true;
  });
+}
+const tagStopwords=new Set(("le la les un une des de du d au aux à a en et ou pour par sur dans avec sans plus " +
+ "est sont ont été sera sera sont celui cette ces ce cet son sa ses leur leurs il elle ils elles nous " +
+ "vous notre votre qui que quoi qu où dont après avant entre vers ce jour ce mois selon " +
+ "reprise reprend début annonce annoncee mise nouvelle nouveau nouveaux nouvelle grande grand " +
+ "petit petite millions milliards francs cfa hier aujourd hui novembre décembre janvier février mars avril mai " +
+ "juin juillet août septembre octobre pendant prochain prochaine samedi dimanche lundi mardi mercredi jeudi vendredi " +
+ "2026 2027 face premier premiere son dernier derniere national info actualité article reportage " +
+ "encore bientôt toujours tout tous toutes trois deux des").split(/\s+/));
+function normalizeWord(word){
+ return String(word||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^A-Za-z0-9]/g,"");
+}
+function titleCaseWord(word){
+ const w=normalizeWord(word);
+ if(!w)return "";
+ // Acronyms like CESEC or INFASS retain their official uppercase form.
+ if(w.length>=2&&w.length<=12&&w===w.toUpperCase()&&/[A-Z]/.test(w))return w;
+ return w.charAt(0).toUpperCase()+w.slice(1).toLowerCase();
+}
+function titleKeywords(title,category){
+ const source=String(title||"").trim();
+ if(!source||source==="[Titre de l’actualité à compléter]")return [];
+ const suggestions=new Map();
+ function add(value,score){
+  const parts=Array.isArray(value)?value:[value];
+  const tokens=parts.map(titleCaseWord).filter(Boolean);
+  if(!tokens.length)return;
+  const tag="#"+tokens.join("");
+  if(tag.length<3||tag.length>41||!/#[A-Za-z][A-Za-z0-9]+/.test(tag))return;
+  const id=tag.toLowerCase();
+  if(!suggestions.has(id)||suggestions.get(id).score<score)suggestions.set(id,{tag,score,order:suggestions.size});
+ }
+ const tokens=[...source.matchAll(/[\p{L}][\p{L}\p{N}'’]*|\d+/gu)].map(m=>m[0].replace(/['’](s|d|l|n|qu|j|m|t)$/i,""));
+ const normalized=tokens.map(normalizeWord);
+ const lower=normalized.map(x=>x.toLowerCase());
+ const has=(word)=>lower.includes(word);
+ const phrases=[
+  [/\bnational\s+foot\s*([12])\b/gi,m=>["National","Foot",m[1]],115],
+  [/\bfootball\s+gabonais\b/gi,()=>["Football","Gabonais"],111],
+  [/\bDakar\s*(20\d{2})\b/gi,m=>["Dakar",m[1]],110],
+  [/\brentrée\s+scolaire\b/gi,()=>["Rentree","Scolaire"],101],
+  [/\bconseil\s+des\s+ministres\b/gi,()=>["Conseil","Ministres"],101],
+  [/\bfonction\s+publique\b/gi,()=>["Fonction","Publique"],98],
+  [/\bsanté\s+publique\b/gi,()=>["Sante","Publique"],96],
+  [/\bélections?\s+(présidentielle|législatives?|locales?)\b/gi,m=>["Elections",m[1]],96],
+  [/\bcoupe\s+d['’]afrique\b/gi,()=>["Coupe","Afrique"],98],
+  [/\bemploi\s+des\s+jeunes\b/gi,()=>["Emploi","Jeunes"],95],
+  [/\bsécurité\s+routière\b/gi,()=>["Securite","Routiere"],95]
+ ];
+ for(const [regex,create,score] of phrases){
+  for(const m of source.matchAll(regex))add(create(m),score);
+ }
+ for(let i=0;i<tokens.length;i++){
+  const w=normalized[i],lo=lower[i];
+  if(w.length>=2&&w.length<=14&&/^[A-Z]{2,}$/.test(w)&&tokens[i]===tokens[i].toUpperCase()&&!tagStopwords.has(lo)){
+   add(w,103);
+  }
+  // Consecutive capitalized tokens often denote a person, city or organization.
+  if(w.length<2||tagStopwords.has(lo)||!/^[A-ZÀ-ÖØ-Þ]/u.test(tokens[i]))continue;
+  const name=[tokens[i]];
+  for(let j=i+1;j<Math.min(tokens.length,i+5);j++){
+   const next=normalized[j],simple=lower[j];
+   if(next.length<2||tagStopwords.has(simple)||!/^[A-ZÀ-ÖØ-Þ]/u.test(tokens[j]))break;
+   name.push(tokens[j]);
+  }
+  if(name.length>=2){add(name,100+name.length);i+=name.length-1;}
+ }
+ if(has("gabon")||has("gabonais")||has("gabonaise")||has("gabonaises")||has("gabonais")||has("cesec")||has("linafp")||has("infass"))add("Gabon",96);
+ const themes=["football","sport","sante","education","emploi","culture","budget","tourisme","environnement","justice","economie","politique","transport","immigration","scolarite","handball","basketball","commerce","agriculture"];
+ for(const theme of themes)if(has(theme))add(theme,69);
+ const catWords=String(category||"").split(/[\s\-]+/).map(normalizeWord).filter(w=>w.length>=3&&!tagStopwords.has(w.toLowerCase()));
+ if(catWords.length&&catWords.length<=3)add(catWords,44);
+ // Never invent names or topics not present in the headline. Unknown terms are offered as optional candidates.
+ if(suggestions.size<3){
+  for(let i=0;i<tokens.length;i++){
+   const w=normalized[i],lo=lower[i];
+   if(w.length>=6&&!tagStopwords.has(lo)&&!/^\d+$/.test(w))add(w,30);
+   if(suggestions.size>=6)break;
+  }
+ }
+ return [...suggestions.values()].sort((a,b)=>b.score-a.score||a.order-b.order).slice(0,8).map(x=>x.tag);
+}
+let suggestedHashtags=[],chosenHashtags=new Set(),hashtagSignature="";
+function syncHashtagSuggestions(force=false){
+ const signature=String(state.headline||"")+"|"+String(state.category||"");
+ if(!force&&hashtagSignature===signature)return;
+ hashtagSignature=signature;
+ suggestedHashtags=titleKeywords(state.headline,state.category);
+ chosenHashtags=new Set(suggestedHashtags.slice(0,4));
+ renderHashtagSuggestions();
+}
+function renderHashtagSuggestions(){
+ const box=$("studioHashtagSuggestions");
+ box.replaceChildren();
+ if(!suggestedHashtags.length){
+  const blank=document.createElement("span");blank.className="studio-note";
+  blank.textContent="Saisissez un titre pour générer des hashtags adaptés.";
+  box.append(blank);
+ }
+ for(const tag of suggestedHashtags){
+  const button=document.createElement("button");button.type="button";
+  const enabled=chosenHashtags.has(tag);
+  button.textContent=tag;
+  button.setAttribute("aria-pressed",String(enabled));
+  button.setAttribute("aria-label",(enabled?"Retirer ":"Ajouter ")+tag);
+  button.addEventListener("click",()=>{
+   if(chosenHashtags.has(tag))chosenHashtags.delete(tag);
+   else chosenHashtags.add(tag);
+   renderHashtagSuggestions();generateCaption();
+  });
+  box.append(button);
+ }
+ const active=chosenHashtags.size;
+ $("studioHashtagCount").textContent=active+" hashtag"+(active>1?"s":"")+" proposé"+(active>1?"s":"")+" sélectionné"+(active>1?"s":"")+". Modifiez les choix avant de publier.";
 }
 let lastCaptionMode=null;
 function suggestedType(){
@@ -332,7 +472,8 @@ function generateCaption(){
  if(type==="lire"){
   lines.push("📰 𝗟’𝗮𝗿𝘁𝗶𝗰𝗹𝗲 𝗰𝗼𝗺𝗽𝗹𝗲𝘁 👉 "+(link||"[Lien de l’article à ajouter]"));
  }
- lines.push(whatsapp,"",uniqueTags(type,$("studioCaptionHashtags").value).join(" "));
+ syncHashtagSuggestions();
+ lines.push(whatsapp,"",uniqueTags(type,$("studioCaptionHashtags").value,[...chosenHashtags]).join(" "));
  $("studioCaptionPreview").value=lines.join("\n");
 }
 function prepareCaptionOnOpen(){
@@ -347,6 +488,7 @@ function prepareCaptionOnOpen(){
 loadCaptionSettings();
 fields.forEach(id=>$(id).addEventListener("input",()=>{saveCaptionSettings();generateCaption();}));
 $("studioCaptionRefresh").addEventListener("click",generateCaption);
+$("studioGenerateHashtags").addEventListener("click",()=>{syncHashtagSuggestions(true);generateCaption();});
 $("studioCaptionCopy").addEventListener("click",async()=>{
  const text=$("studioCaptionPreview").value;
  if($("studioCaptionType").value==="lire"&&!$("studioCaptionLink").value.trim()){
