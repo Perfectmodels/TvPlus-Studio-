@@ -37,7 +37,7 @@
   function within(t){return [...t].length<=limit&&t.split(/\s+/).length<=wordLimit;}
   if(within(s))return {title:s,cut:false};
   // Prefer natural clause boundaries, not arbitrary character truncation.
-  for(const separator of [/;\s+/,/[,;]\s+(?:mais|alors que|tandis que|cependant)\s+/i,/\s+[—–]\s+/,/\s+(?:tandis que|alors que|dans le cadre de|lors d['’]|au cours de)\s+/i]){
+  for(const separator of [/;\s+/,/[,;]\s+(?:mais|alors que|tandis que|cependant)\s+/i,/\s+[—–]\s+/,/\s+(?:tandis que|alors que|dans le cadre de|dans les processus de|à l['’]occasion d['’]|au terme de|lors d['’]|au cours de)\s+/i]){
    const sections=s.split(separator);
    if(sections.length>1&&sections[0].length>=30&&within(sections[0]))return {title:sections[0].trim(),cut:false};
   }
@@ -78,7 +78,8 @@
    const factual=(source==="article"?1:0);
    const early=Math.max(0,11-index*1.25);
    const clarity=sentence.length>=35&&sentence.length<=180?8:0;
-   return overlap*5+themes*2.5+Math.min(numberCount,3)*4+early+clarity+factual;
+   const unclear=/^(?:il|elle|ils|elles|cela|ce dernier|cette dernière|celui-ci|celle-ci)\b/i.test(sentence)?-25:0;
+   return overlap*5+themes*2.5+Math.min(numberCount,3)*4+early+clarity+factual+unclear;
   }
   const ordered=[];
   if(headline)ordered.push({text:headline,from:"titre initial",index:0,source:"headline"});
