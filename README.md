@@ -20,6 +20,18 @@ Les modèles **Pastille** et **Décryptage** utilisent désormais un sélecteur 
 
 Cette liste est une photographie vérifiée du site officiel (sans requête externe au chargement de TV+ Studio). Le choix met à jour immédiatement la Pastille ou le Décryptage et reste enregistré dans les brouillons locaux. Les variantes orthographiques d'anciens brouillons (`Economie`, `Sante`, `Faits divers`) sont normalisées ; une valeur ancienne qui n'existe plus reste visible comme « Ancienne catégorie » afin de ne pas perdre la donnée. Le modèle Décryptage d'exemple utilise **Société** comme rubrique et conserve « Décryptage » comme nom de format, pas comme rubrique.
 
+## Parcours de publication unifié — mobile et ordinateur
+
+TV+ Studio dispose d'un chemin de production continu : **Affiche → Photo (améliorer / recadrer / importer) → Légende Facebook → Vérifier & exporter**. Les fonctionnalités existantes restent les mêmes, avec des accès plus proches du lieu de travail.
+
+- **Sur ordinateur** : barre d'étapes sous les sélecteurs de modèles, visible pendant la création. Boutons dédiés **Affiche**, **Améliorer photo**, **Recadrer**, **Légende Facebook**, **Vérifier / Exporter** et **Brouillons**. Les outils de rédaction s'affichent **à la place de l'aperçu, à côté de l'éditeur d'affiche**, sans bloquer le reste du site.
+- **Sur téléphone** : navigation fixe en bas à **5 actions** : **Affiche**, **Photo**, **Légende**, **Aperçu**, **Exporter**. **Photo** ouvre un menu regroupant **Améliorer**, **Recadrer** et **Importer**. Le bandeau mobile Éditeur/Aperçu d'origine est masqué pour éviter la double navigation, mais ses fonctions internes restent utilisables.
+- **Rédaction intégrée** : onglets **Légende Facebook**, **Brouillons** et **Qualité & formats** au sein de l'espace de travail. Le contrôle qualité ouvre toujours l'export optimisé WebP/JPEG ; l'export PNG classique reste accessible depuis l'aperçu de l'affiche.
+- Les dialogues photo (recadrage et amélioration) conservent leur interface dédiée lorsqu'ils sont ouverts. Les images, les titres et les brouillons ne sont pas effacés au changement d'étape.
+- Les actions utilisent les boutons et les gestionnaires existants plutôt que de reproduire les traitements : aucune deuxième logique de génération d'affiche ni faux boutons.
+
+Implémentation : `studio-workflow.js` s'exécute après `studio-editorial-tools.js`. En mode rédaction intégré, le panneau de rédaction est intégré au `main.workspace` et ouvert avec un dialogue **non modal**, pour garder la navigation disponible.
+
 ## Affiches
 
 - **Pastille** (1:1) : catégorie, titre et mots-clés jaunes cliquables, tailles réglables. **Largeur des caractères** ajustable de **85 à 115 %**, neutre à **100 %** (l'ancien étirement horizontal forcé à 78 % est supprimé) ; interligne réglable de 0,85× à 1,65× et espacement des lettres de −3 à +10 px. Ces contrôles sont regroupés sous « Proportions et espacements du titre », conservés dans les brouillons locaux, et pris en compte dans l'export PNG et l'ajustement automatique au pied de page.
