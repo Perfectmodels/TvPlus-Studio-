@@ -1093,7 +1093,7 @@ document.querySelector('.preview-meta').textContent='1:1 · rendu en direct';
    if(result)actx.drawImage(result,0,0,pw,ph);else if(src)actx.drawImage(src,0,0,pw,ph);
    else {bctx.fillStyle='#8c9fb7';bctx.font='700 23px Barlow,Arial,sans-serif';bctx.textAlign='center';bctx.fillText('Importer une photo',pw/2,ph/2);actx.drawImage(before,0,0);}
    $('enhancePreviewMeta').textContent=result?`${dims(src)} → ${dims(result)}`:src?`${dims(src)} · original`:'Aucun rendu';
-   $('enhanceResultDims').textContent=result?`Export ${dims(result)} px · ${current.processedMode==='fast'?'Correction locale':'Super-résolution IA'}. Original intact.`:'Le traitement amélioré reste local, sans envoi de photographie.';
+   $('enhanceResultDims').textContent=result?`Export ${dims(result)} px · ${current.processedMode==='fast'?'Correction locale':current.processedMode==='openai'?'Retouche OpenAI':'Super-résolution IA'}. Original intact.`:'Le traitement amélioré reste local, sans envoi de photographie.';
  }
  function setMode(mode){if(current.busy)return;current.mode=mode;
    for(const [m,btn] of Object.entries(modeBtns)){btn.classList.toggle('active',m===mode);btn.setAttribute('aria-pressed',String(m===mode));}
@@ -1273,7 +1273,7 @@ document.querySelector('.preview-meta').textContent='1:1 · rendu en direct';
      const img=await loadImage(dataURL);
      const cv=document.createElement('canvas');cv.width=img.width;cv.height=img.height;
      cv.getContext('2d').drawImage(img,0,0);current.output=cv;current.processedMode='openai';
-     drawCompare();$('enhanceCompare').value='55';box.style.setProperty('--split','55%');
+     setBusy(false);drawCompare();$('enhanceCompare').value='55';box.style.setProperty('--split','55%');
      status('Résultat OpenAI prêt. Comparez avec l’original et vérifiez les détails avant export.','success');
    }
  };
