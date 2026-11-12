@@ -335,7 +335,7 @@ function uniqueTags(type,extra,automatic=[]){
  const all=[...defaults,...automatic,...manual];
  const found=new Set();
  return all.filter(tag=>{
-  if(!/^#[A-Za-z][A-Za-z0-9_]{1,39}$/.test(tag))return false;
+  if(!/^#[A-Za-z0-9][A-Za-z0-9_]{1,39}$/.test(tag)||!/[A-Za-z]/.test(tag))return false;
   const key=tag.toLowerCase();
   if(found.has(key))return false;
   found.add(key);return true;
@@ -348,7 +348,8 @@ const tagStopwords=new Set(("le la les un une des de du d au aux à a en et ou p
  "petit petite millions milliards francs cfa hier aujourd hui novembre décembre janvier février mars avril mai " +
  "juin juillet août septembre octobre pendant prochain prochaine samedi dimanche lundi mardi mercredi jeudi vendredi " +
  "2026 2027 face premier premiere son dernier derniere national info actualité article reportage " +
- "encore bientôt toujours tout tous toutes trois deux des").split(/\s+/));
+ "encore bientôt toujours tout tous toutes trois deux des accorde plaide dénonce annonce confirme indique "
++"estime explique assure présente révèle reporte humilié humilie affirme affirmee").split(/\s+/));
 function normalizeWord(word){
  return String(word||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^A-Za-z0-9]/g,"");
 }
@@ -408,7 +409,9 @@ function titleKeywords(title,category){
   if(name.length>=2){add(name,100+name.length);i+=name.length-1;}
  }
  if(has("gabon")||has("gabonais")||has("gabonaise")||has("gabonaises")||has("gabonais")||has("cesec")||has("linafp")||has("infass"))add("Gabon",96);
- const themes=["football","sport","sante","education","emploi","culture","budget","tourisme","environnement","justice","economie","politique","transport","immigration","scolarite","handball","basketball","commerce","agriculture"];
+ const cities=["libreville","portgentil","oyem","dakar","pekin","paris","france","chine","togo","cameroun","senegal","canada","mayumba","mouila","bitam"];
+ for(const city of cities)if(has(city))add(city,85);
+ const themes=["football","sport","sante","education","emploi","culture","budget","tourisme","environnement","justice","economie","politique","transport","immigration","scolarite","handball","basketball","commerce","agriculture","financement","enseignement","universite","formation","recherche","infrastructures"];
  for(const theme of themes)if(has(theme))add(theme,69);
  const catWords=String(category||"").split(/[\s\-]+/).map(normalizeWord).filter(w=>w.length>=3&&!tagStopwords.has(w.toLowerCase()));
  if(catWords.length&&catWords.length<=3)add(catWords,44);
@@ -420,7 +423,7 @@ function titleKeywords(title,category){
    if(suggestions.size>=6)break;
   }
  }
- return [...suggestions.values()].sort((a,b)=>b.score-a.score||a.order-b.order).slice(0,8).map(x=>x.tag);
+ return [...suggestions.values()].sort((a,b)=>b.score-a.score||a.order-b.order).slice(0,8).map(x=>({tag:x.tag,score:x.score}));
 }
 let suggestedHashtags=[],chosenHashtags=new Set(),hashtagSignature="";
 function syncHashtagSuggestions(force=false){
@@ -428,7 +431,8 @@ function syncHashtagSuggestions(force=false){
  if(!force&&hashtagSignature===signature)return;
  hashtagSignature=signature;
  suggestedHashtags=titleKeywords(state.headline,state.category);
- chosenHashtags=new Set(suggestedHashtags.slice(0,4));
+ chosenHashtags=new Set(suggestedHashtags.filter(x=>x.score>=60).slice(0,4).map(x=>x.tag));
+ if(!chosenHashtags.size&&suggestedHashtags.length)chosenHashtags.add(suggestedHashtags[0].tag);
  renderHashtagSuggestions();
 }
 function renderHashtagSuggestions(){
@@ -439,7 +443,7 @@ function renderHashtagSuggestions(){
   blank.textContent="Saisissez un titre pour générer des hashtags adaptés.";
   box.append(blank);
  }
- for(const tag of suggestedHashtags){
+ for(const {tag} of suggestedHashtags){
   const button=document.createElement("button");button.type="button";
   const enabled=chosenHashtags.has(tag);
   button.textContent=tag;
