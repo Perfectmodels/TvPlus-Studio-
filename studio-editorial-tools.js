@@ -220,12 +220,12 @@ dlg.innerHTML=`
   <button id="studioRunCheck" type="button" class="studio-accent">Vérifier l’affiche</button>
   <div id="studioCheckResults" class="studio-check-results" role="status">Cliquez pour contrôler le titre, l'image et les dimensions.</div>
   <div class="studio-tool-subtitle">Exporter une image optimisée</div>
-  <p class="studio-note">La version PNG reste accessible normalement depuis le bouton de téléchargement de l'éditeur.</p>
+  <p class="studio-note">Toutes les options de téléchargement sont maintenant accessibles ici, sans revenir en haut de l’éditeur.</p>
   <div class="studio-form-grid">
    <label>Format <select id="studioFormat"><option value="image/webp">WebP · léger</option><option value="image/jpeg">JPEG · compatible</option></select></label>
    <label>Qualité <select id="studioQuality"><option value=".75">75 %</option><option value=".85" selected>85 % · recommandé</option><option value=".92">92 %</option></select></label>
   </div>
-  <div class="studio-editorial-actions"><button id="studioOptimizedExport" class="studio-accent" type="button">Télécharger le fichier optimisé</button></div>
+  <div class="studio-editorial-actions"><button id="studioOptimizedExport" class="studio-accent" type="button">Télécharger WebP / JPG</button><button id="studioOriginalPNG" type="button">Télécharger PNG haute qualité</button></div>
   <p class="studio-note" id="studioOptimizedStatus" role="status"></p>
  </section>
  </div>
@@ -745,6 +745,7 @@ function check(){
  const p=document.createElement("strong");p.textContent=issues.length+" point(s) à vérifier avant la publication :";root.append(p);
  const ul=document.createElement("ul");for(const t of issues){const li=document.createElement("li");li.textContent=t;ul.append(li);}root.append(ul);
 }
+$("studioOriginalPNG").addEventListener("click",()=>{const button=$("downloadBtn");if(button)button.click();});
 $("studioOptimizedExport").addEventListener("click",async()=>{
  const target=$("studioOptimizedStatus");target.textContent="Préparation du fichier…";
  try{
