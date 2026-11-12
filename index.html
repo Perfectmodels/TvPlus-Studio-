@@ -377,6 +377,14 @@ dialog:not([open]) { display: none !important; }
 .pastille-full-content textarea{min-height:70px;width:100%;resize:vertical;padding:9px 10px;font:inherit}
 .pastille-full-content p{font-size:10px;margin:7px 0 0}
 </style>
+<style id="tvplus-category-style">
+.tvplus-category-selector{position:relative}
+.tvplus-category-selector:after{content:"⌄";position:absolute;right:13px;top:50%;transform:translateY(-58%);font-size:19px;line-height:1;color:#f4c12d;pointer-events:none}
+.tvplus-category-selector #category{display:block;width:100%;min-height:44px;padding:10px 38px 10px 12px;appearance:none;-webkit-appearance:none;cursor:pointer;font-weight:700;letter-spacing:.015em}
+.tvplus-category-selector #category:focus-visible{outline:2px solid #f4c12d;outline-offset:2px}
+.tvplus-category-selector #category option{background:#101c30;color:#f6f9ff}
+.tvplus-category-hint{font-size:10px;margin:6px 0 0!important;color:#91a9c1}
+</style>
 </head>
 <body>
 <header class="appbar new-appbar"><div class="brand"><div class="brand-mark">TV<span>+</span></div><div class="brand-text"><strong>TV+ Studio</strong><small>Atelier graphique · TV+ Afrique</small></div></div><div class="header-right"><div class="header-info"><span class="header-dot"></span>4 modèles · retouche photo locale</div></div></header>
@@ -393,7 +401,7 @@ dialog:not([open]) { display: none !important; }
 <div class="pane-title editor-heading"><div><div class="eyebrow">01 · ÉDITEUR</div><h1>Votre contenu</h1></div><span class="num">Modifications en direct</span></div><p class="editor-intro" id="modeDescription">Renseignez le titre, puis cliquez sur les mots pour les mettre en jaune.</p>
 
 
-<div class="section-label"><span class="section-index">A</span><span>Texte de l’affiche</span></div><div class="field field-tight" id="categoryField"><label class="field-label" for="category">Catégorie</label><input class="input" id="category" list="categories" maxlength="30" value="ÉCONOMIE"/><datalist id="categories"><option>SOCIÉTÉ</option><option>ÉCONOMIE</option><option>POLITIQUE</option><option>ÉDUCATION</option><option>SANTÉ</option><option>SPORT</option><option>CULTURE</option><option>ENVIRONNEMENT</option><option>INTERNATIONAL</option></datalist></div>
+<div class="section-label"><span class="section-index">A</span><span>Texte de l’affiche</span></div><div class="field field-tight" id="categoryField"><label class="field-label" for="category">Catégorie TV+ Afrique <span class="hint">11 rubriques officielles</span></label><div class="tvplus-category-selector"><select class="input" id="category" aria-label="Sélectionner une catégorie du site TV+ Afrique"><option value="CULTURE">Culture</option><option value="ÉCONOMIE" selected>Économie</option><option value="ÉDUCATION">Éducation</option><option value="ENVIRONNEMENT">Environnement</option><option value="INTERNATIONAL">International</option><option value="JUSTICE">Justice</option><option value="FAIT DIVERS">Fait divers</option><option value="POLITIQUE">Politique</option><option value="SANTÉ">Santé</option><option value="SOCIÉTÉ">Société</option><option value="SPORT">Sport</option></select></div><p class="hint tvplus-category-hint">Rubriques relevées sur tvplusafrique.com</p></div>
 <div class="field field-tight"><label class="field-label" for="headline">Titre court de la pastille <span class="hint" id="lengthIndicator">44 / 75 caractères</span></label><textarea id="headline" maxlength="75" placeholder="Titre court, direct et précis pour l'affiche…" spellcheck="true">Pékin accorde 24 milliards FCFA au Gabon</textarea><p class="hint pastille-title-status" id="pastilleTitleStatus" role="status">Titre court recommandé : 70 caractères et 12 mots maximum.</p></div>
 <details class="field field-tight pastille-full-article" id="pastilleFullTitlePanel"><summary>Titre complet de l’article <span>pour la légende Facebook</span></summary><div class="pastille-full-content"><label for="articleFullTitle">Titre intégral de l’article (facultatif)</label><textarea class="input" id="articleFullTitle" rows="2" maxlength="400" placeholder="Le titre complet n’apparaît pas sur l’affiche.">Pékin a accordé un don de 24 milliards de francs CFA au Gabon</textarea><p class="hint">Si renseigné, ce texte sera utilisé dans la légende Facebook « À lire » à la place du titre court.</p></div></details>
 <details class="field field-tight word-panel" id="highlightArea" open=""><summary class="word-panel-summary"><span><b>Personnaliser les mots</b><small id="wordSummaryTip">Cliquez pour surligner en jaune</small></span><span aria-hidden="true" class="arrow-symbol">⌄</span></summary>
@@ -478,6 +486,34 @@ const sampleTitle='Pékin accorde 24 milliards FCFA au Gabon';
 const sampleFullArticleTitle='Pékin a accordé un don de 24 milliards de francs CFA au Gabon';
 const alertTitle='La liste de Migné avec Allevinah et Babicka';
 const state={mode:'pastille',category:'ÉCONOMIE',headline:sampleTitle,articleFullTitle:sampleFullArticleTitle,highlightedIndices:new Set(),wordSizes:new Map(),sizeSelection:new Set(),tool:'highlight',fontScale:100,lineHeight:1.16,letterSpacing:0,image:null,logo:null,zoom:100,darkness:70,dx:0,dy:0,website:'tvplusafrique.com',sample:true,fontFamily:'Barlow',fontWeight:900};
+
+// Official TV+ Afrique editorial sections (tvplusafrique.com, checked 2026-11-12).
+// News categories are not production formats like "Alerte info" or "Décryptage".
+const tvplusOfficialCategories=new Set(["CULTURE","ÉCONOMIE","ÉDUCATION","ENVIRONNEMENT","INTERNATIONAL","JUSTICE","FAIT DIVERS","POLITIQUE","SANTÉ","SOCIÉTÉ","SPORT"]);
+function normalizeOfficialCategory(raw){
+ const text=String(raw||'').trim();
+ if(!text)return '';
+ const key=text.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase().replace(/\s+/g,' ');
+ const aliases={ECONOMIE:'ÉCONOMIE',EDUCATION:'ÉDUCATION',SANTE:'SANTÉ',SOCIETE:'SOCIÉTÉ','FAITS DIVERS':'FAIT DIVERS',DECRYPTAGE:'SOCIÉTÉ'};
+ const normalized=aliases[key]||key;
+ return tvplusOfficialCategories.has(normalized)?normalized:text;
+}
+function setCategoryValue(value){
+ const select=$('category');
+ const legacy=select.querySelector('option[data-legacy-category]');
+ if(legacy)legacy.remove();
+ const normalized=normalizeOfficialCategory(value);
+ if(!normalized){select.selectedIndex=-1;state.category='';return;}
+ if(!tvplusOfficialCategories.has(normalized)){
+  const option=document.createElement('option');
+  option.value=normalized;
+  option.textContent='Ancienne catégorie : '+normalized;
+  option.dataset.legacyCategory='true';
+  select.append(option);
+ }
+ select.value=normalized;
+ state.category=normalized;
+}
 function loadImage(src){return new Promise((resolve,reject)=>{const im=new Image();im.onload=()=>resolve(im);im.onerror=reject;im.src=src;});}
 function loadFile(file,cb){if(!file)return;if(!file.type.startsWith('image/')){alert('Veuillez choisir une image JPG, PNG ou WEBP.');return;}const reader=new FileReader();reader.onload=async()=>{try{const im=await loadImage(reader.result);cb(im,file.name);}catch(e){alert('Impossible de lire cette image.');}};reader.readAsDataURL(file);}
 function headlineCanvasFont(size,weight=state.fontWeight){return `${weight} ${size}px "${state.fontFamily}",Arial,sans-serif`;}
@@ -635,7 +671,7 @@ $('pastilleBtn').addEventListener('click',()=>updateMode('pastille'));
 $('alerteBtn').addEventListener('click',()=>updateMode('alerte'));
 $('fontFamily').addEventListener('change',e=>{state.fontFamily=e.target.value;draw();refreshBarlow();});
 $('fontWeight').addEventListener('change',e=>{state.fontWeight=Number(e.target.value);draw();refreshBarlow();});
-$('category').addEventListener('input',e=>{state.category=e.target.value;draw();});
+$('category').addEventListener('input',e=>{setCategoryValue(e.target.value);draw();});
 $('headline').addEventListener('input',e=>{if(state.mode==='pastille'&&state.articleFullTitle===sampleFullArticleTitle){state.articleFullTitle='';$('articleFullTitle').value='';}syncHeadlineFormatting(state.headline,e.target.value);state.headline=e.target.value;renderTokens();syncSizeControls();draw();});
 $('articleFullTitle').addEventListener('input',e=>{state.articleFullTitle=e.target.value;});
 $('colorTool').addEventListener('click',()=>setTool('highlight'));
@@ -686,7 +722,7 @@ const initialState={headline:state.headline,articleFullTitle:state.articleFullTi
 const defaults={
   pastille:{headline:sampleTitle,articleFullTitle:sampleFullArticleTitle,category:'ÉCONOMIE',details:'',speaker:'',role:''},
   alerte:{headline:alertTitle,category:'',details:'',speaker:'',role:''},
-  decryptage:{headline:'DÉGUERPISSEMENT LIBREVILLE',category:'DÉCRYPTAGE',details:'Du Lac Bleu à Okala, qui profite vraiment des milliards du dédommagement foncier ?',speaker:'',role:''},
+  decryptage:{headline:'DÉGUERPISSEMENT LIBREVILLE',category:'SOCIÉTÉ',details:'Du Lac Bleu à Okala, qui profite vraiment des milliards du dédommagement foncier ?',speaker:'',role:''},
   verbatim:{headline:'Le retour en politique ne dispense du devoir de bilan. Lorsqu’il réclame aujourd’hui davantage de dialogue, de renouvellement, de transparence et de démocratie interne au PDG, une question s’impose : pourquoi toutes ces exigences n’ont-elles pas été prioritaires durant les années où il disposait du pouvoir ?',category:'',details:'',speaker:'Serge William Akassaga',role:'ACTEUR POLITIQUE'}
 };
 const drafts={pastille:{...initialState,...defaults.pastille},alerte:{...defaults.alerte},decryptage:{...defaults.decryptage},verbatim:{...defaults.verbatim}};
@@ -831,8 +867,8 @@ draw=function(){if(addedModes.includes(state.mode))drawNew();else{
  $('canvasShell').classList.remove('is-wide');poster.style.aspectRatio='1 / 1';preexistingDraw();
 }};
 function storeCurrent(){drafts[state.mode]={headline:state.headline,articleFullTitle:state.articleFullTitle,category:state.category,details:detailText,speaker:speakerText,role:roleText,image:state.image,sample:state.sample,zoom:state.zoom,dx:state.dx,dy:state.dy,lineHeight:state.lineHeight,letterSpacing:state.letterSpacing,highlightedIndices:new Set(state.highlightedIndices),wordSizes:new Map(state.wordSizes)};}
-function restoreMode(mode){const d=drafts[mode]||defaults[mode];state.headline=d.headline||'';state.articleFullTitle=d.articleFullTitle||'';state.category=d.category||'';detailText=d.details||'';speakerText=d.speaker||'';roleText=d.role||'';state.image=d.image===undefined?state.image:d.image;state.sample=d.sample===undefined?true:d.sample;state.zoom=d.zoom||100;state.dx=d.dx||0;state.dy=d.dy||0;state.lineHeight=Number(d.lineHeight)||1.16;state.letterSpacing=Number(d.letterSpacing)||0;syncPastilleSpacing();state.highlightedIndices=new Set(d.highlightedIndices||[]);state.wordSizes=new Map(d.wordSizes||[]);state.sizeSelection.clear();
- $('headline').value=state.headline;$('articleFullTitle').value=state.articleFullTitle;$('category').value=state.category;$('details').value=detailText;$('speaker').value=speakerText;$('role').value=roleText;
+function restoreMode(mode){const d=drafts[mode]||defaults[mode];state.headline=d.headline||'';state.articleFullTitle=d.articleFullTitle||'';setCategoryValue(d.category||'');detailText=d.details||'';speakerText=d.speaker||'';roleText=d.role||'';state.image=d.image===undefined?state.image:d.image;state.sample=d.sample===undefined?true:d.sample;state.zoom=d.zoom||100;state.dx=d.dx||0;state.dy=d.dy||0;state.lineHeight=Number(d.lineHeight)||1.16;state.letterSpacing=Number(d.letterSpacing)||0;syncPastilleSpacing();state.highlightedIndices=new Set(d.highlightedIndices||[]);state.wordSizes=new Map(d.wordSizes||[]);state.sizeSelection.clear();
+ $('headline').value=state.headline;$('articleFullTitle').value=state.articleFullTitle;$('details').value=detailText;$('speaker').value=speakerText;$('role').value=roleText;
  $('zoom').value=state.zoom;$('zoomLabel').textContent=state.zoom+' %';$('photoName').textContent=state.sample?'Photo à importer':'Photo personnalisée';
 }
 updateMode=function(mode){if(mode===state.mode)return;if(!defaults[mode])return;
