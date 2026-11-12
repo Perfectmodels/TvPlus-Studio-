@@ -1,7 +1,7 @@
 // TV+ Studio — Rebrandly serverless proxy.
-// Secrets must be configured in Vercel: REBRANDLY_API_KEY and TVPLUS_SHORTENER_ACCESS_CODE.
-// No credential is ever shipped to the browser or committed to GitHub.
-const { timingSafeEqual } = require('node:crypto');
+// Only REBRANDLY_API_KEY must be configured in Vercel. No credential is shipped to the browser.
+// The shortener is limited to first-party TV+ article URLs and protects the API key.
+// No authentication is implemented: deploy on a trusted network or add identity-based auth before broad public access.
 
 const DOMAIN = 'l.tvplusafrique.com';
 const API = 'https://api.rebrandly.com/v1';
@@ -14,11 +14,6 @@ const send = (res, status, body) => {
   res.setHeader('X-Content-Type-Options','nosniff');
   return res.status(status).json(body);
 };
-function equal(a,b){
-  if(typeof a!=='string'||typeof b!=='string'||!a||!b)return false;
-  const aa=Buffer.from(a,'utf8'),bb=Buffer.from(b,'utf8');
-  return aa.length===bb.length && timingSafeEqual(aa,bb);
-}
 function validDestination(raw){
  if(typeof raw!=='string'||raw.length>2048)return null;
  try{
@@ -34,7 +29,6 @@ function validDestination(raw){
 }
 async function callRebrandly(endpoint,params){
  const headers={'apikey':process.env.REBRANDLY_API_KEY,'Accept':'application/json'};
- if(process.env.REBRANDLY_WORKSPACE_ID)headers.Workspace=process.env.REBRANDLY_WORKSPACE_ID;
  if(params)headers['Content-Type']='application/json';
  const response=await fetch(API+endpoint,{
   method:params?'POST':'GET',headers,
@@ -60,7 +54,7 @@ async function domainId(){
 }
 module.exports=async function handler(req,res){
  if(req.method==='GET'){
-  return send(res,200,{configured:Boolean(process.env.REBRANDLY_API_KEY&&process.env.TVPLUS_SHORTENER_ACCESS_CODE),domain:DOMAIN});
+  return send(res,200,{configured:Boolean(process.env.REBRANDLY_API_KEY),domain:DOMAIN});
  }
  if(req.method!=='POST'){
   res.setHeader('Allow','GET, POST');
@@ -73,11 +67,15 @@ module.exports=async function handler(req,res){
  try{
   if(new URL(origin).host!==req.headers.host)return send(res,403,{error:'Requête non autorisée'});
  }catch(_){return send(res,403,{error:'Requête non autorisée'});}
- if(!process.env.REBRANDLY_API_KEY || !process.env.TVPLUS_SHORTENER_ACCESS_CODE){
-  return send(res,503,{error:"Le raccourcisseur n’est pas encore activé dans Vercel."});
+ if(!process.env.REBRANDLY_API_KEY){
+  return send(res,503,{error:"La clé Rebrandly doit être ajoutée aux variables d’environnement Vercel."});
  }
- if(!equal(req.headers['x-tvplus-access'],process.env.TVPLUS_SHORTENER_ACCESS_CODE)){
-  return send(res,401,{error:"Code d’accès incorrect."});
+ // Cross-site scripts cannot create links. This is an abuse-reduction measure,
+ // not a substitute for private access or authenticated editors.
+ const fetchSite=String(req.headers['sec-fetch-site']||'');
+ if(fetchSite && fetchSite!=='same-origin')return send(res,403,{error:'Requête non autorisée'});
+ if(!String(req.headers['content-type']||'').toLowerCase().startsWith('application/json')){
+  return send(res,415,{error:'Contenu JSON requis'});
  }
  const ip=String(req.headers['x-forwarded-for']||'').split(',')[0].trim().slice(0,100);
  const now=Date.now(),rateKey=ip||'anonymous';
@@ -90,12 +88,9 @@ module.exports=async function handler(req,res){
  const dest=validDestination(raw.destination);
  if(!dest)return send(res,400,{error:'Le lien doit être une URL HTTPS du site tvplusafrique.com.'});
  const title=String(raw.title||'TV+ Afrique — article').trim().slice(0,255);
- const slug=raw.slashtag===undefined?'':String(raw.slashtag).trim();
- if(slug && !/^[a-zA-Z0-9_-]{1,40}$/.test(slug))return send(res,400,{error:'Le nom du lien doit contenir 1 à 40 lettres, chiffres, tirets ou soulignements.'});
  try{
   const id=await domainId();
   const payload={destination:dest,domainId:id,title:title||'TV+ Afrique'};
-  if(slug)payload.slashtag=slug;
   const result=await callRebrandly('/links',payload);
   const rawShort=String(result?.shortUrl||'').replace(/^https?:\/\//i,'');
   if(!rawShort.startsWith(DOMAIN+'/')){
@@ -104,10 +99,10 @@ module.exports=async function handler(req,res){
   return send(res,200,{shortUrl:'https://'+rawShort,destination:dest});
  }catch(error){
   // Never return the user's API key, provider request headers, or upstream raw payload.
-  if(error?.code===404)return send(res,502,{error:"Le domaine court TV+ n’a pas été trouvé dans l’espace Rebrandly. Vérifiez son association ou le workspace."});
+  if(error?.code===404)return send(res,502,{error:"Le domaine court TV+ n’a pas été trouvé dans votre compte Rebrandly. Vérifiez son association."});
   if(error?.code===401||error?.code===403)return send(res,502,{error:"Rebrandly refuse la clé ou l’accès au domaine. Vérifiez les autorisations du compte."});
   if(error?.code===429)return send(res,429,{error:'Quota Rebrandly atteint.'});
-  if(error?.code===400)return send(res,422,{error:'Rebrandly a refusé ce lien. Vérifiez sa destination ou son nom personnalisé.'});
+  if(error?.code===400)return send(res,422,{error:'Rebrandly a refusé ce lien. Vérifiez sa destination.'});
   return send(res,502,{error:"Impossible de contacter Rebrandly pour le moment."});
  }
 };
