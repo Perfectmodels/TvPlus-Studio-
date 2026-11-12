@@ -506,7 +506,7 @@ function titleKeywords(title,category){
 }
 let suggestedHashtags=[],chosenHashtags=new Set(),hashtagSignature="";
 function syncHashtagSuggestions(force=false){
- const relevantTitle=state.headline;
+ const relevantTitle=window.TVPlusAutoArticle?.current?.title||state.headline;
  const signature=String(relevantTitle||"")+"|"+String(state.category||"");
  if(!force&&hashtagSignature===signature)return;
  hashtagSignature=signature;
@@ -545,7 +545,7 @@ function suggestedType(){
  return "lire";
 }
 function syncCaptionTitle(force=false){
- const source=String(state.headline||"").trim();
+ const source=String(window.TVPlusAutoArticle?.current?.title||state.headline||"").trim();
  const currentType=$("studioCaptionType").value||"lire";
  $("studioCaptionTitleBlock").hidden=currentType!=="lire";
  $("studioArticleHeadlineTool").hidden=currentType!=="lire";
@@ -593,7 +593,7 @@ function prepareCaptionOnOpen(){
 loadCaptionSettings();
 fields.forEach(id=>$(id).addEventListener("input",()=>{
  if(id==="studioCaptionTitle")captionTitleCustomized=true;
- if(id==="studioArticleBody")articleBoundTitle=String(state.headline||"").trim();
+ if(id==="studioArticleBody")articleBoundTitle=String(window.TVPlusAutoArticle?.current?.title||state.headline||"").trim();
  generateCaption();
  saveCaptionSettings();
 }));
@@ -602,7 +602,7 @@ function applySuggestedHeadline(value,needsReview=false){
  const title=String(value||"").trim();
  if(!title)return;
  $("studioCaptionTitle").value=title;
- captionTitleSource=String(state.headline||"").trim();
+ captionTitleSource=String(window.TVPlusAutoArticle?.current?.title||state.headline||"").trim();
  captionTitleCustomized=true;
  syncCaptionTitle();
  generateCaption();
@@ -617,7 +617,7 @@ $("studioAnalyzeArticle").addEventListener("click",()=>{
  if($("studioCaptionType").value!=="lire"){message.textContent="L’analyse de l’article est réservée au modèle À lire.";return;}
  const text=$("studioArticleBody").value.trim();
  if(text.length<110){message.textContent="Collez un article plus complet (au moins 110 caractères) pour que l’analyse ait du sens.";return;}
- if(articleBoundTitle&&articleBoundTitle!==String(state.headline||"").trim()){
+ if(articleBoundTitle&&articleBoundTitle!==String(window.TVPlusAutoArticle?.current?.title||state.headline||"").trim()){
   message.textContent="Cet article a été saisi pour une autre affiche. Vérifiez et modifiez le texte avant de relancer l’analyse, afin d’éviter une légende erronée.";
   $("studioArticleBody").focus();return;
  }
@@ -626,7 +626,7 @@ $("studioAnalyzeArticle").addEventListener("click",()=>{
   message.textContent="L’outil français n’est pas chargé. Actualisez la page et réessayez.";return;
  }
  let data;
- try{data=engine.suggest({article:text,headline:state.headline,category:state.category,maxChars:75,maxWords:12});}
+ try{data=engine.suggest({article:text,headline:window.TVPlusAutoArticle?.current?.title||state.headline,category:state.category,maxChars:75,maxWords:12});}
  catch(_){message.textContent="Impossible d’analyser ce texte. Essayez avec le contenu de l’article sans mise en forme.";return;}
  if(!data.candidates?.length){message.textContent="Aucune formulation fiable trouvée : vérifiez le texte et proposez un titre manuellement.";return;}
  const selected=data.candidates.findIndex(x=>!x.needsReview);
