@@ -29,14 +29,15 @@ Cette liste est une photographie vérifiée du site officiel (sans requête exte
 
 Le texte est ajusté automatiquement pour ne pas recouvrir le pied de page. Les polices Barlow, Barlow Semi Condensed et Barlow Condensed sont prises en charge. Export PNG disponible.
 
-### Pastilles « À lire » : titre court, légende complète et marque
+### Titre d’affiche et titre de légende Facebook : deux usages distincts
 
-- **Titre court de l’affiche** : champ dédié limité à **75 caractères**, avec recommandation de **70 caractères / 12 mots maximum**, signalement visuel des titres trop longs et composition plafonnée à **3 lignes**. Les textes restent modifiables ; rien n'est tronqué silencieusement.
-- **Titre complet de l’article** : champ facultatif dépliable sous le titre court. Lorsqu'il est renseigné, le générateur de légendes Facebook « À lire » utilise le **titre complet** et les suggestions de hashtags sont calculées depuis celui-ci. Le titre court reste réservé à l'affiche.
-- **Pied de page** : tracés vectoriels officiels **Instagram, Facebook et X** de Simple Icons (CC0) intégrés directement dans le Canvas, harmonisés en **48 px** avec espacement constant. Aucune image distante à charger, donc l'export PNG reste autonome. Les marques restent soumises aux règles de leurs titulaires.
-- **Logo TV+** : conservation du fichier blanc transparent **TV+ avec la silhouette de l’Afrique**, extrait du visuel de référence fourni, sans redessin ou substitution.
-- Les deux titres sont conservés dans les brouillons par modèle et dans la sauvegarde locale IndexedDB.
-
+- **Titre de l’affiche Pastille** : champ libre. Il s'affiche dans l'image et dispose de l'ajustement typographique automatique pour protéger le pied de page. La précédente limite de 75 caractères et le plafond de 3 lignes ont été **retirés** de l'affiche.
+- **Titre de la légende Facebook « À lire »** : un champ **indépendant** dans **Rédaction & brouillons → Légende Facebook**. Le titre de l'affiche sert de point de départ. L'équipe peut ensuite le raccourcir ou le reformuler, sans toucher au visuel ou au titre complet de l'article.
+- Le titre Facebook est recommandé à **75 caractères et 12 mots maximum**. Un compteur et une alerte expliquent quand le raccourcir ; la copie de la légende « À lire » demande de respecter ces limites.
+- Le générateur de hashtags continue de se baser sur le titre source de l'affiche, plutôt que de perdre des mots-clés supprimés lors de la condensation Facebook.
+- **Pied de page** : tracés vectoriels **Instagram, Facebook et X** de Simple Icons (CC0), intégrés directement dans le Canvas et harmonisés en 48 px.
+- **Logo TV+** : fichier blanc transparent avec la silhouette de l’Afrique conservé depuis le modèle de référence.
+- Les titres d'affiche restent enregistrés dans les brouillons IndexedDB. Le titre court de Facebook est conservé en local et réinitialisé lorsque le titre source change.
 
 ## Recadrage photo
 
