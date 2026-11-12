@@ -410,7 +410,7 @@ function titleKeywords(title,category){
  }
  if(has("gabon")||has("gabonais")||has("gabonaise")||has("gabonaises")||has("gabonais")||has("cesec")||has("linafp")||has("infass"))add("Gabon",96);
  const cities=["libreville","portgentil","oyem","dakar","pekin","paris","france","chine","togo","cameroun","senegal","canada","mayumba","mouila","bitam"];
- for(const city of cities)if(has(city))add(city,85);
+ for(const city of cities)if(has(city)&&!(city==="dakar"&&/\bDakar\s*(20\d{2})\b/i.test(source)))add(city,85);
  const themes=["football","sport","sante","education","emploi","culture","budget","tourisme","environnement","justice","economie","politique","transport","immigration","scolarite","handball","basketball","commerce","agriculture","financement","enseignement","universite","formation","recherche","infrastructures"];
  for(const theme of themes)if(has(theme))add(theme,69);
  const catWords=String(category||"").split(/[\s\-]+/).map(normalizeWord).filter(w=>w.length>=3&&!tagStopwords.has(w.toLowerCase()));
