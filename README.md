@@ -2,6 +2,24 @@
 
 Interface web responsive pour l'équipe éditoriale TV+ Afrique. Site statique sur Vercel, branché sur GitHub.
 
+## Catégories officielles TV+ Afrique
+
+Les modèles **Pastille** et **Décryptage** utilisent désormais un sélecteur natif de catégories, à la place du champ de saisie libre. Les **11 rubriques d'actualité** ont été relevées sur [tvplusafrique.com](https://www.tvplusafrique.com/) le 12 novembre 2026 :
+
+- Culture
+- Économie
+- Éducation
+- Environnement
+- International
+- Justice
+- Fait divers
+- Politique
+- Santé
+- Société
+- Sport
+
+Cette liste est une photographie vérifiée du site officiel (sans requête externe au chargement de TV+ Studio). Le choix met à jour immédiatement la Pastille ou le Décryptage et reste enregistré dans les brouillons locaux. Les variantes orthographiques d'anciens brouillons (`Economie`, `Sante`, `Faits divers`) sont normalisées ; une valeur ancienne qui n'existe plus reste visible comme « Ancienne catégorie » afin de ne pas perdre la donnée. Le modèle Décryptage d'exemple utilise **Société** comme rubrique et conserve « Décryptage » comme nom de format, pas comme rubrique.
+
 ## Affiches
 
 - **Pastille** (1:1) : catégorie, titre et mots-clés jaunes cliquables, tailles réglables. **Interligne** personnalisable de 0,85× à 1,65× et **espacement des lettres** de -3 à +10 px, pris en compte dans l'ajustement automatique du titre pour protéger le pied de page. Réglages disponibles dans « Interligne et espacement des lettres » sous la taille générale, conservés dans les brouillons locaux et dans l'export PNG.
