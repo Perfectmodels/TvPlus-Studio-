@@ -15,7 +15,7 @@ function safeURL(raw){
  return url.href;
  }catch(_){return null}
 }
-const entities={nbsp:" ",amp:"&",lt:"<",gt:">",quot:'"',apos:"'",eacute:"é",egrave:"è",ecirc:"ê",agrave:"à",ccedil:"ç",rsquo:"’",ldquo:"“",rdquo:"”"};
+const entities={nbsp:" ",amp:"&",lt:"<",gt:">",quot:'"',apos:"'",eacute:"é",egrave:"è",ecirc:"ê",agrave:"à",ccedil:"ç",rsquo:"’",ldquo:"“",rdquo:"”",icirc:"î",ocirc:"ô",acirc:"â",ucirc:"û",euml:"ë",iuml:"ï",ouml:"ö",auml:"ä",uuml:"ü",ugrave:"ù",ograve:"ò",ndash:"–",mdash:"—",hellip:"…"};
 function decode(s){
  return String(s||"").replace(/&(#x[\da-f]+|#\d+|[a-z]+);/gi,(full,key)=>{
  if(key[0]==="#"){
