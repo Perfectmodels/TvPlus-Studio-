@@ -339,7 +339,11 @@ dialog.crop-dialog{max-height:calc(100dvh - 22px);width:min(1100px,96vw);border-
  .enhance-footer-actions button{min-height:0;height:100%}
 }
 
-</style></head>
+</style><style id="dialog-visibility-fix">
+/* Fix: the mobile flex layout must never display closed photo tool dialogs. */
+dialog:not([open]) { display: none !important; }
+</style>
+</head>
 <body>
 <header class="appbar new-appbar"><div class="brand"><div class="brand-mark">TV<span>+</span></div><div class="brand-text"><strong>TV+ Studio</strong><small>Atelier graphique · TV+ Afrique</small></div></div><div class="header-right"><div class="header-info"><span class="header-dot"></span>4 modèles · retouche photo locale</div></div></header>
 <nav aria-label="Outils et modèles TV+" class="format-navbar">
