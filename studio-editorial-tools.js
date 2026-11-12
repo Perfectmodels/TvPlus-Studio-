@@ -331,7 +331,7 @@ switcher?.addEventListener("click",event=>{
  const mode=btn.id.replace(/Btn$/,"");
  if(mode===state.mode||!modes.includes(mode))return;
  flushSave();
- setTimeout(()=>{if(state.mode===mode&&bank.has(mode))applySaved(mode);},60);
+ setTimeout(()=>{if(state.mode===mode){if(bank.has(mode))applySaved(mode);scheduleSave(1200);}},60);
 },true);
 document.addEventListener("input",event=>{
  if(dlg.contains(event.target))return;
