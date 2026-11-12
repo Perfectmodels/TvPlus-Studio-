@@ -595,8 +595,8 @@ $("studioAnalyzeArticle").addEventListener("click",()=>{
  const text=$("studioArticleBody").value.trim();
  if(text.length<110){message.textContent="Collez un article plus complet (au moins 110 caractères) pour que l’analyse ait du sens.";return;}
  if(articleBoundTitle&&articleBoundTitle!==String(state.headline||"").trim()){
-  message.textContent="Attention : cet article a été saisi pour une autre affiche. Vérifiez qu’il correspond bien au titre actuel avant l’analyse.";
-  articleBoundTitle=String(state.headline||"").trim();
+  message.textContent="Cet article a été saisi pour une autre affiche. Vérifiez et modifiez le texte avant de relancer l’analyse, afin d’éviter une légende erronée.";
+  $("studioArticleBody").focus();return;
  }
  const engine=window.TVPlusFrenchHeadlines;
  if(!engine||typeof engine.suggest!=="function"){
