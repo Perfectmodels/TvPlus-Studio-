@@ -1,0 +1,17 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "functions": {
+    "api/image-ai.js": {
+      "maxDuration": 120
+    },
+    "api/editorial-ai.js": {
+      "maxDuration": 50
+    },
+    "api/article.js": {
+      "maxDuration": 30
+    },
+    "api/shorten.js": {
+      "maxDuration": 25
+    }
+  }
+}
