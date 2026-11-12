@@ -350,7 +350,7 @@ function show(key="caption"){
  tab(key);
  if(!dlg.open)dlg.show();
  document.dispatchEvent(new CustomEvent("tvplus:workflow-stage",{detail:{stage:key}}));
- if(window.matchMedia("(max-width:760px)").matches)
+ if(window.matchMedia("(max-width:850px)").matches)
   requestAnimationFrame(()=>window.scrollTo({top:0,behavior:"instant"}));
 }
 function closeEditorial(){
