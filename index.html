@@ -262,13 +262,90 @@ dialog.crop-dialog{max-height:calc(100dvh - 22px);width:min(1100px,96vw);border-
 .word-panel>.token-help,.fit-explain{display:none}
 }
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;transition:none!important}}
+</style><style>
+/* TV+ Studio v6 — photo enhancement workspace, aligned to the existing system */
+.studio-extras{gap:8px}
+.enhance-top-btn{border:1px solid #65592c;background:#322e20;color:#ffedc5;display:grid;grid-template-columns:20px 1fr;grid-template-rows:20px 15px;align-items:center;gap:0 9px;min-height:58px;padding:7px 13px;border-radius:10px;text-align:left;cursor:pointer}
+.enhance-top-btn:hover{background:#413b24;border-color:#ffcc47}
+.enhance-top-btn .enhance-icon{grid-row:span 2;font-size:23px;color:#ffcb37}
+.enhance-top-btn .enhance-title{font-size:12px;font-weight:850;white-space:nowrap}
+.enhance-top-btn small{font-size:10px;color:#e5c986}
+.enhance-dialog{position:fixed;inset:0;max-width:1200px;width:min(1160px,97vw);max-height:calc(100dvh - 24px);margin:auto;padding:0;overflow:hidden;color:#f5f8ff;background:#0f1b2e;border:1px solid #354b66;border-radius:16px;box-shadow:0 22px 90px #000b}
+.enhance-dialog::backdrop{background:#040b19dc;backdrop-filter:blur(5px)}
+.enhance-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:13px 18px;border-bottom:1px solid #31445e;background:#111f32}
+.enhance-head h2{font-size:19px;margin:2px 0 0;line-height:1.25}
+.enhance-head p{font-size:11px;color:#aabdd6;margin:3px 0 0}
+.enhance-head-eyebrow{font-size:10px;letter-spacing:1.6px;color:#ffd452;font-weight:850}
+.enhance-close{border:1px solid #3d536f;border-radius:9px;background:#192a40;color:white;font-size:24px;width:39px;height:39px;flex:none}
+.enhance-body{display:grid;grid-template-columns:minmax(265px,325px) minmax(0,1fr);gap:15px;min-height:0;max-height:calc(100dvh - 185px);overflow:hidden;padding:15px}
+.enhance-controls{display:flex;flex-direction:column;gap:11px;min-height:0;overflow-y:auto;scrollbar-width:thin;padding-right:3px}
+.enhance-label{display:block;font-size:12px;font-weight:800;color:#dce7f5;margin-bottom:5px}
+.enhance-source-row{display:flex;gap:7px}
+.enhance-file{flex:1;display:grid;place-items:center;padding:8px;border:1px dashed #627b92;background:#1a3046;border-radius:9px;min-height:43px;text-align:center;cursor:pointer;font-size:12px;font-weight:800}
+.enhance-file input{position:absolute;opacity:0;width:1px;height:1px;pointer-events:none}
+.enhance-source-row button{font-size:11px;min-height:43px;border:1px solid #47617d;border-radius:9px;background:#263c53;color:white;padding:7px 10px;font-weight:750}
+.enhance-source-row button:disabled{opacity:.45}
+.enhance-source-meta{font-size:11px;color:#9eb3c9;line-height:1.35;min-height:17px;overflow-wrap:anywhere}
+.enhance-modes{display:grid;grid-template-columns:1fr 1fr 1fr;gap:5px;background:#0c1828;padding:4px;border:1px solid #314861;border-radius:10px}
+.enhance-modes button{padding:8px 3px;min-width:0;border:0;border-radius:7px;background:transparent;color:#b0c2d8;font-size:12px;font-weight:800;line-height:1.3}
+.enhance-modes button.active{background:#ffd04b;color:#102037}
+.enhance-modes button:disabled{opacity:.5}
+.enhance-quick{display:flex;gap:7px}
+.enhance-quick button{flex:1;min-width:0;border:1px solid #51657c;border-radius:9px;min-height:39px;font-size:12px;font-weight:800;background:#223c55;color:#fff;padding:7px}
+.enhance-quick button.enhance-primary{background:#ffc62e;color:#132033;border-color:#ffc62e}
+.enhance-details{border:1px solid #2e4461;border-radius:9px;overflow:hidden;background:#111e30}
+.enhance-details summary{padding:10px 12px;cursor:pointer;font-weight:750;color:#d0deee;font-size:12px}
+.enhance-details-inner{padding:7px 11px 11px;border-top:1px solid #2d4059;display:grid;gap:10px}
+.enhance-range-label{display:flex;justify-content:space-between;align-items:center;gap:6px;font-size:11px;color:#c6d5e8;font-weight:700}
+.enhance-range-label output{font-weight:800;color:#ffce45;min-width:35px;text-align:right}
+.enhance-details input[type=range],.enhance-compare-slider{accent-color:#ffc62e;width:100%;margin:2px 0 0}
+.enhance-note{font-size:11px;line-height:1.45;color:#a9bdd5;margin:0}
+.enhance-status{font-size:11px;line-height:1.45;border:1px solid #324965;border-radius:9px;padding:9px 11px;background:#14263c;color:#b5cde1;min-height:40px}
+.enhance-status[data-kind=success]{border-color:#356553;color:#b6e8cc;background:#16332e}
+.enhance-status[data-kind=error]{border-color:#80504d;color:#ffd0c4;background:#422328}
+.enhance-status[data-kind=working]{border-color:#856c30;color:#ffe2a5;background:#3c3020}
+.enhance-stage{min-width:0;min-height:0;display:flex;flex-direction:column;gap:8px;align-items:center;justify-content:flex-start}
+.enhance-stage-top{width:100%;display:flex;justify-content:space-between;gap:12px;align-items:center;color:#bacde2;font-size:12px;font-weight:700}
+.enhance-stage-top span:last-child{font-size:11px;color:#96aac3}
+.enhance-comparison{--split:50%;position:relative;display:grid;place-items:center;width:100%;max-height:calc(100dvh - 315px);aspect-ratio:16/9;border-radius:11px;overflow:hidden;border:1px solid #3a506c;background:#07111f;box-shadow:0 10px 32px #0005;touch-action:pan-y}
+.enhance-comparison>canvas{grid-area:1/1;width:100%;height:100%;object-fit:contain;display:block;background:#101a27}
+.enhance-comparison #enhanceAfterCanvas{position:absolute;inset:0;clip-path:inset(0 calc(100% - var(--split)) 0 0)}
+.enhance-comparison .enhance-split{position:absolute;top:0;bottom:0;left:var(--split);width:2px;background:#ffe083;box-shadow:0 0 0 1px #0008;pointer-events:none;transform:translateX(-1px)}
+.enhance-comparison .enhance-split::after{content:'↔';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:#ffc82c;border:2px solid #fff;border-radius:50%;display:grid;place-items:center;width:34px;height:34px;color:#12213a;font-weight:900;box-shadow:0 4px 16px #0005}
+.enhance-compare-row{display:flex;width:100%;align-items:center;gap:11px;color:#b6c8de;font-size:11px;font-weight:750}
+.enhance-compare-row input{flex:1}
+.enhance-result-dims{width:100%;font-size:11px;color:#92aac7;line-height:1.5}
+.enhance-footer{display:flex;justify-content:space-between;gap:12px;align-items:center;padding:11px 17px;border-top:1px solid #31445e;background:#111f32}
+.enhance-footer-copy{display:flex;flex-direction:column;gap:2px;color:#a6bad0;font-size:11px}
+.enhance-footer-copy strong{color:#e5efff;font-size:12px}
+.enhance-footer-actions{display:flex;gap:7px;flex-wrap:wrap;justify-content:flex-end}
+.enhance-footer-actions button{min-height:38px;padding:7px 11px;border:1px solid #48627d;border-radius:8px;background:#20374f;color:#ecf5ff;font-weight:800;font-size:12px}
+.enhance-footer-actions button.enhance-download{background:#ffca29;border-color:#ffca29;color:#0c1c2e}
+.enhance-footer-actions button:disabled,.enhance-quick button:disabled{opacity:.4;cursor:not-allowed}
+@media(max-width:1200px){.format-navbar{gap:9px}.format-leading{min-width:130px}.studio-extras{gap:6px}.enhance-top-btn,.crop-top-btn{padding:7px 9px;gap:0 5px}.enhance-top-btn .enhance-title,.crop-top-btn .crop-title{font-size:11px}}
+@media(max-width:920px){.studio-extras{width:100%;justify-content:stretch}.studio-extras>button{flex:1;display:flex;align-items:center;justify-content:center;gap:7px;min-height:39px}.studio-extras>button small{display:none}.studio-extras .crop-icon,.studio-extras .enhance-icon{font-size:18px}.format-navbar{flex-wrap:wrap}.format-tool{flex:1 0 100%}.format-navbar{top:54px}}
+@media(max-width:760px){.enhance-dialog{width:99vw;max-height:98dvh;border-radius:12px}.enhance-head{padding:10px 12px}.enhance-head h2{font-size:17px}.enhance-body{display:flex;flex-direction:column;max-height:calc(98dvh - 146px);overflow:auto;padding:10px;gap:10px}.enhance-stage{order:-1;flex:none}.enhance-comparison{max-height:31dvh;min-height:150px}.enhance-controls{overflow:visible;gap:7px;padding:0}.enhance-footer{padding:9px;gap:7px;flex-direction:column;align-items:stretch}.enhance-footer-copy{display:none}.enhance-footer-actions{display:grid;grid-template-columns:1fr 1fr}.enhance-footer-actions button:last-child{grid-column:1/-1}.enhance-note{font-size:10px}.enhance-stage-top{font-size:11px}}
+@media(max-width:420px){.enhance-footer-actions button{padding:7px 5px;font-size:11px}.enhance-modes button{font-size:11px}.format-navbar .studio-extras{gap:6px}}
+/* Keep the three export actions visible at all times on small screens. */
+@media(max-width:760px){
+ .enhance-dialog{display:flex;flex-direction:column;max-height:98dvh;height:min(820px,98dvh)}
+ .enhance-head{flex:none}
+ .enhance-body{flex:1;min-height:0;max-height:none;overflow-y:auto;overscroll-behavior:contain}
+ .enhance-footer{flex:none}
+ .enhance-footer-actions{grid-template-rows:39px 36px;gap:5px}
+ .enhance-footer-actions #enhanceExport{grid-row:1;grid-column:1/-1}
+ .enhance-footer-actions #enhanceUseCrop{grid-row:2;grid-column:1}
+ .enhance-footer-actions #enhanceUsePosterOutput{grid-row:2;grid-column:2}
+ .enhance-footer-actions button{min-height:0;height:100%}
+}
+
 </style></head>
 <body>
-<header class="appbar new-appbar"><div class="brand"><div class="brand-mark">TV<span>+</span></div><div class="brand-text"><strong>TV+ Studio</strong><small>Atelier graphique · TV+ Afrique</small></div></div><div class="header-right"><div class="header-info"><span class="header-dot"></span>4 modèles · Exports PNG</div></div></header>
+<header class="appbar new-appbar"><div class="brand"><div class="brand-mark">TV<span>+</span></div><div class="brand-text"><strong>TV+ Studio</strong><small>Atelier graphique · TV+ Afrique</small></div></div><div class="header-right"><div class="header-info"><span class="header-dot"></span>4 modèles · retouche photo locale</div></div></header>
 <nav aria-label="Outils et modèles TV+" class="format-navbar">
 <div class="format-leading"><span class="nav-eyebrow">VOTRE STUDIO</span><span class="nav-prompt">Choisissez votre format</span></div>
 <div class="format-actions"><div class="mode-switch"><button aria-pressed="true" class="mode-btn active" id="pastilleBtn" title="Modèle Pastille" type="button"><span class="tab-title">Pastille</span><span class="tab-subtitle">1:1 · Carré</span></button><button aria-pressed="false" class="mode-btn" id="alerteBtn" title="Modèle Alerte info" type="button"><span class="tab-title">Alerte info</span><span class="tab-subtitle">1:1 · Carré</span></button></div></div>
-<div class="format-tool"><button aria-label="Ouvrir l’outil de recadrage photo 1200 × 600" class="crop-top-btn" id="openCropTool" type="button"><span aria-hidden="true" class="crop-icon">▣</span><span class="crop-title">Recadrer une image</span><small>1200 × 600</small></button></div>
+<div class="format-tool studio-extras"><button aria-label="Ouvrir l’outil de recadrage photo 1200 × 600" class="crop-top-btn" id="openCropTool" type="button"><span aria-hidden="true" class="crop-icon">▣</span><span class="crop-title">Recadrer une image</span><small>1200 × 600</small></button><button class="enhance-top-btn" id="openEnhanceTool" type="button" aria-label="Ouvrir l’amélioration photo"><span class="enhance-icon" aria-hidden="true">✦</span><span class="enhance-title">Amélioration photo</span><small>Local · IA optionnelle</small></button></div>
 </nav><div aria-label="Afficher les réglages ou l'aperçu" class="mobile-view-switch" role="group">
 <button aria-pressed="true" class="mobile-switch-btn active" data-show="editor" type="button">✎ <span>Éditeur</span></button>
 <button aria-pressed="false" class="mobile-switch-btn" data-show="preview" type="button">▣ <span>Aperçu</span></button>
@@ -692,6 +769,7 @@ document.querySelector('.preview-meta').textContent='1:1 · rendu en direct';
   if(file.size>30*1024*1024){alert('La photo ne doit pas dépasser 30 Mo.');e.target.value='';return;}
   loadFile(file,(image,name)=>loaded(image,name));e.target.value='';
  });
+ document.addEventListener('tvplus:load-enhanced-in-crop',e=>{if(e.detail?.image)loaded(e.detail.image,e.detail.name||'photo-amelioree');});
  el('cropUsePoster').addEventListener('click',()=>{if(state.image&&!state.sample)loaded(state.image,el('photoName').textContent||'photo-affiche');});
  el('cropZoom').addEventListener('input',e=>{crop.zoom=Number(e.target.value);el('cropZoomLabel').textContent=crop.zoom+' %';redraw();});
  el('cropReset').addEventListener('click',resetPosition);
@@ -758,5 +836,239 @@ document.querySelector('.preview-meta').textContent='1:1 · rendu en direct';
  $('resetAll').addEventListener('click',()=>queueMicrotask(()=>syncModel(true)));
  syncModel(true);view('editor');
 })();
-</script></body>
+</script><dialog class="enhance-dialog" id="enhanceDialog" aria-labelledby="enhanceTitle">
+  <div class="enhance-head"><div><div class="enhance-head-eyebrow">TV+ STUDIO · PHOTOGRAPHIE</div><h2 id="enhanceTitle">Amélioration photo</h2><p>Traitement sur cet appareil. Votre image ne quitte pas le navigateur.</p></div><button type="button" id="enhanceClose" class="enhance-close" aria-label="Fermer">×</button></div>
+  <div class="enhance-body">
+    <div class="enhance-controls">
+      <div>
+        <span class="enhance-label">01 · Choisir la photographie</span>
+        <div class="enhance-source-row"><label class="enhance-file" for="enhanceInput">＋ Importer une photo<input id="enhanceInput" type="file" accept="image/jpeg,image/png,image/webp"></label><button type="button" id="enhanceUsePoster">Photo de l'affiche</button></div>
+        <div class="enhance-source-meta" id="enhanceSourceMeta">Importez une photo pour commencer.</div>
+      </div>
+      <div><span class="enhance-label">02 · Qualité souhaitée</span>
+        <div class="enhance-modes" role="group" aria-label="Mode d'amélioration">
+          <button type="button" id="enhanceModeFast" class="active" aria-pressed="true">Rapide</button>
+          <button type="button" id="enhanceModeAI2" aria-pressed="false">IA ×2</button>
+          <button type="button" id="enhanceModeAI4" aria-pressed="false">IA ×4</button>
+        </div>
+        <p class="enhance-note" id="enhanceModeHint" style="margin-top:6px">Correction réelle de lumière, couleur, bruit et netteté. Fonctionne sans téléchargement supplémentaire.</p>
+      </div>
+      <div class="enhance-quick"><button type="button" id="enhanceAuto" class="enhance-primary" disabled>✦ Améliorer automatiquement</button><button type="button" id="enhanceProcess" disabled>Appliquer les réglages</button></div>
+      <details class="enhance-details" id="enhanceAdvanced"><summary>Réglages manuels · lumière, netteté et bruit</summary><div class="enhance-details-inner">
+        <div><label class="enhance-range-label" for="enhanceLight">Lumière <output id="enhanceLightOut">0</output></label><input id="enhanceLight" type="range" min="-35" max="35" value="0"></div>
+        <div><label class="enhance-range-label" for="enhanceContrast">Contraste <output id="enhanceContrastOut">8</output></label><input id="enhanceContrast" type="range" min="-30" max="40" value="8"></div>
+        <div><label class="enhance-range-label" for="enhanceColor">Couleur <output id="enhanceColorOut">8</output></label><input id="enhanceColor" type="range" min="-30" max="40" value="8"></div>
+        <div><label class="enhance-range-label" for="enhanceNoise">Réduction du bruit <output id="enhanceNoiseOut">26 %</output></label><input id="enhanceNoise" type="range" min="0" max="90" value="26"></div>
+        <div><label class="enhance-range-label" for="enhanceSharp">Netteté <output id="enhanceSharpOut">38 %</output></label><input id="enhanceSharp" type="range" min="0" max="100" value="38"></div>
+      </div></details>
+      <div id="enhanceStatus" class="enhance-status" role="status" aria-live="polite">Aucune image chargée.</div>
+      <p class="enhance-note">L’IA utilise Real-ESRGAN localement. Le modèle (~5 Mo) et son moteur sont téléchargés au premier lancement ; aucune API ni photo transmise. Les corrections peuvent produire des détails artificiels : vérifiez le résultat avant publication.</p>
+    </div>
+    <div class="enhance-stage"><div class="enhance-stage-top"><span>03 · Comparer avant / après</span><span id="enhancePreviewMeta">Aucun rendu</span></div>
+      <div id="enhanceComparison" class="enhance-comparison"><canvas id="enhanceBeforeCanvas" width="1200" height="675" aria-label="Photographie avant amélioration"></canvas><canvas id="enhanceAfterCanvas" width="1200" height="675" aria-label="Photographie après amélioration"></canvas><div class="enhance-split" aria-hidden="true"></div></div>
+      <div class="enhance-compare-row"><span>Avant</span><input id="enhanceCompare" class="enhance-compare-slider" type="range" min="0" max="100" value="50" aria-label="Comparateur avant et après"><span>Après</span></div>
+      <div class="enhance-result-dims" id="enhanceResultDims">Le téléchargement conserve la meilleure résolution produite par le traitement choisi.</div>
+    </div>
+  </div>
+  <div class="enhance-footer"><div class="enhance-footer-copy"><strong>Original conservé</strong><span>Export PNG · traitement privé sur l’appareil</span></div>
+    <div class="enhance-footer-actions"><button type="button" id="enhanceUseCrop" disabled>Passer au recadrage</button><button type="button" id="enhanceUsePosterOutput" disabled>Utiliser dans l'affiche</button><button type="button" id="enhanceExport" class="enhance-download" disabled>↓ Télécharger le PNG</button></div>
+  </div>
+</dialog>
+
+<script>
+/* TV+ Studio v6 — local image enhancement and optional ONNX Real-ESRGAN.
+   All user pixels stay on the device. ONNX and model are static files downloaded on demand. */
+(()=>{
+ 'use strict';
+ const $=id=>document.getElementById(id),dlg=$('enhanceDialog');
+ const before=$('enhanceBeforeCanvas'),after=$('enhanceAfterCanvas');
+ const bctx=before.getContext('2d',{willReadFrequently:true}),actx=after.getContext('2d',{willReadFrequently:true});
+ const box=$('enhanceComparison'),modeBtns={fast:$('enhanceModeFast'),ai2:$('enhanceModeAI2'),ai4:$('enhanceModeAI4')};
+ const runtimeURL='https://cdn.jsdelivr.net/npm/onnxruntime-web@1.22.0/dist/';
+ const modelURL='https://cdn.jsdelivr.net/gh/NovareOrbis/nova-ai-models@v3/realesr-general-x4v3.onnx';
+ const limits={maxFile:30*1024*1024,maxInputPixels:36e6};
+ const current={source:null,name:'photo',output:null,mode:'fast',busy:false,cancel:false,processedMode:null};
+ let runtimePromise=null,sessionPromise=null;
+ const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+ const tick=()=>new Promise(resolve=>requestAnimationFrame(resolve));
+ const createCanvas=(w,h)=>{const cv=document.createElement('canvas');cv.width=w;cv.height=h;return cv;};
+ const status=(message,kind='info')=>{const el=$('enhanceStatus');el.textContent=message;el.dataset.kind=kind;};
+ const dims=c=>`${c.width.toLocaleString('fr-FR')} × ${c.height.toLocaleString('fr-FR')}`;
+ function activeImage(){return current.output||current.source;}
+ function setBusy(v){current.busy=v;for(const id of ['enhanceAuto','enhanceProcess','enhanceInput','enhanceUsePoster','enhanceModeFast','enhanceModeAI2','enhanceModeAI4']){$(id).disabled=v || (id==='enhanceUsePoster'&&(!state.image||state.sample)) || ((id==='enhanceAuto'||id==='enhanceProcess')&&!current.source);}
+   const enabled=!!current.output&&!v;for(const id of ['enhanceExport','enhanceUsePosterOutput','enhanceUseCrop'])$(id).disabled=!enabled;
+ }
+ function previewDims(w,h){const k=Math.min(1,1200/w,750/h);return [Math.max(1,Math.round(w*k)),Math.max(1,Math.round(h*k))];}
+ function drawCompare(){
+   const image=current.source,result=current.output;
+   const src=image||null;const w=src?.width||1200,h=src?.height||675;
+   const [pw,ph]=previewDims(w,h);
+   before.width=after.width=pw;before.height=after.height=ph;
+   box.style.aspectRatio=`${pw} / ${ph}`;
+   bctx.fillStyle='#07111f';bctx.fillRect(0,0,pw,ph);
+   actx.fillStyle='#07111f';actx.fillRect(0,0,pw,ph);
+   if(src)bctx.drawImage(src,0,0,pw,ph);
+   if(result)actx.drawImage(result,0,0,pw,ph);else if(src)actx.drawImage(src,0,0,pw,ph);
+   else {bctx.fillStyle='#8c9fb7';bctx.font='700 23px Barlow,Arial,sans-serif';bctx.textAlign='center';bctx.fillText('Importer une photo',pw/2,ph/2);actx.drawImage(before,0,0);}
+   $('enhancePreviewMeta').textContent=result?`${dims(src)} → ${dims(result)}`:src?`${dims(src)} · original`:'Aucun rendu';
+   $('enhanceResultDims').textContent=result?`Export ${dims(result)} px · ${current.processedMode==='fast'?'Correction locale':'Super-résolution IA'}. Original intact.`:'Le traitement amélioré reste local, sans envoi de photographie.';
+ }
+ function setMode(mode){if(current.busy)return;current.mode=mode;
+   for(const [m,btn] of Object.entries(modeBtns)){btn.classList.toggle('active',m===mode);btn.setAttribute('aria-pressed',String(m===mode));}
+   $('enhanceModeHint').textContent=mode==='fast'?'Correction de lumière, couleurs, réduction du bruit et netteté, sans téléchargement supplémentaire.':`Real-ESRGAN : modèle exécuté dans le navigateur, export ${mode==='ai2'?'×2':'×4'}. Recommandé pour les images de petite taille.`;
+   if(current.source&&current.processedMode!==mode)status('Mode modifié. Cliquez sur « Améliorer automatiquement » pour obtenir un nouveau rendu.');
+ }
+ async function loadSourceImage(img,name){
+   if(current.busy)return;
+   if(!img?.width||!img?.height||img.width*img.height>limits.maxInputPixels){status('Cette photo est trop grande pour le traitement en navigateur (limite : 36 Mpx).','error');return;}
+   current.source=img;current.output=null;current.processedMode=null;current.name=(name||'photo').replace(/\.[a-z0-9]+$/i,'').replace(/[^\w\-]+/g,'-').slice(0,55)||'photo';
+   $('enhanceSourceMeta').textContent=`${name||'Photo chargée'} · ${dims(img)} px`;
+   setBusy(false);drawCompare();status('Photo prête. « Améliorer automatiquement » applique une correction mesurée.');
+ }
+ function settings(){return {light:+$('enhanceLight').value,contrast:+$('enhanceContrast').value,color:+$('enhanceColor').value,noise:+$('enhanceNoise').value,sharp:+$('enhanceSharp').value};}
+ function updateSliderLabels(){for(const id of ['Light','Contrast','Color','Noise','Sharp'])$("enhance"+id+'Out').textContent=$('enhance'+id).value+(id==='Noise'||id==='Sharp'?' %':'');}
+ function sampleStats(img){
+   const w=240,h=Math.max(24,Math.round(img.height*240/img.width)),cv=createCanvas(w,h),g=cv.getContext('2d',{willReadFrequently:true});g.drawImage(img,0,0,w,h);
+   const d=g.getImageData(0,0,w,h).data,hist=new Uint32Array(256);let total=0,sum=0;
+   for(let i=0;i<d.length;i+=16){const lum=Math.round(.2126*d[i]+.7152*d[i+1]+.0722*d[i+2]);hist[lum]++;sum+=lum;total++;}
+   function percentile(frac){let acc=0;for(let i=0;i<256;i++){acc+=hist[i];if(acc>=total*frac)return i;}return 255;}
+   return {mean:sum/Math.max(1,total),p5:percentile(.05),p95:percentile(.95)};
+ }
+ function autoSettings(){const {mean,p5,p95}=sampleStats(current.source);
+   $('enhanceLight').value=String(Math.round(clamp((120-mean)*.24,-20,23)));
+   $('enhanceContrast').value=String(Math.round(clamp((188-(p95-p5))*.13,-10,19)));
+   $('enhanceColor').value='9';$('enhanceNoise').value='25';$('enhanceSharp').value='39';updateSliderLabels();
+ }
+ async function fastProcess(){
+   // The internal canvas preserves source dimensions up to a documented performance/memory limit.
+   const src=current.source,allowedLong=innerWidth<=760?1800:3000,maxPixels=7e6;
+   const scale=Math.min(1,allowedLong/Math.max(src.width,src.height),Math.sqrt(maxPixels/(src.width*src.height)));
+   const w=Math.max(1,Math.round(src.width*scale)),h=Math.max(1,Math.round(src.height*scale));
+   const cv=createCanvas(w,h),g=cv.getContext('2d',{willReadFrequently:true});g.imageSmoothingQuality='high';g.drawImage(src,0,0,w,h);
+   const data=g.getImageData(0,0,w,h),orig=data.data,settings_=settings(),len=orig.length,adjusted=new Uint8ClampedArray(len);
+   const gain=1+settings_.contrast/100,brightness=settings_.light*1.35,saturation=1+settings_.color/100;
+   status('Correction de la lumière et des couleurs…','working');await tick();
+   for(let i=0;i<len;i+=4){let r=(orig[i]-127.5)*gain+127.5+brightness,gc=(orig[i+1]-127.5)*gain+127.5+brightness,b=(orig[i+2]-127.5)*gain+127.5+brightness;
+     const l=.2126*r+.7152*gc+.0722*b;
+     adjusted[i]=clamp(l+(r-l)*saturation,0,255);adjusted[i+1]=clamp(l+(gc-l)*saturation,0,255);adjusted[i+2]=clamp(l+(b-l)*saturation,0,255);adjusted[i+3]=orig[i+3];
+   }
+   // A small edge-aware neighbourhood reduces speckle without blurring high-contrast edges.
+   let softened=adjusted;
+   if(settings_.noise>0){status('Réduction du grain, préservation des contours…','working');await tick();softened=new Uint8ClampedArray(adjusted);
+     const strength=settings_.noise/100*0.85,threshold=11+settings_.noise*.24;
+     for(let y=1;y<h-1;y++){for(let x=1;x<w-1;x++){const p=(y*w+x)*4,l0=.21*adjusted[p]+.72*adjusted[p+1]+.07*adjusted[p+2];let rs=0,gs=0,bs=0,count=0;
+       for(let oy=-1;oy<=1;oy++)for(let ox=-1;ox<=1;ox++){const q=p+oy*w*4+ox*4,l=.21*adjusted[q]+.72*adjusted[q+1]+.07*adjusted[q+2];if(Math.abs(l-l0)<threshold){rs+=adjusted[q];gs+=adjusted[q+1];bs+=adjusted[q+2];count++;}}
+       if(count>1){softened[p]=adjusted[p]*(1-strength)+strength*rs/count;softened[p+1]=adjusted[p+1]*(1-strength)+strength*gs/count;softened[p+2]=adjusted[p+2]*(1-strength)+strength*bs/count;}
+     }}
+   }
+   if(settings_.sharp>0){status('Renforcement des détails…','working');await tick();const amount=settings_.sharp/100*.7;
+     for(let y=1;y<h-1;y++){for(let x=1;x<w-1;x++){const p=(y*w+x)*4;
+       for(let k=0;k<3;k++){const center=softened[p+k],blur=(softened[p+k-4]+softened[p+k+4]+softened[p+k-w*4]+softened[p+k+w*4])*.25,delta=center-blur;
+         data.data[p+k]=clamp(center+(Math.abs(delta)<1.8?0:clamp(delta*amount,-26,26)),0,255);
+       }
+       data.data[p+3]=softened[p+3];
+     }}
+     for(let x=0;x<w;x++)for(const y of [0,h-1]){const p=(y*w+x)*4;for(let k=0;k<4;k++)data.data[p+k]=softened[p+k];}
+     for(let y=0;y<h;y++)for(const x of [0,w-1]){const p=(y*w+x)*4;for(let k=0;k<4;k++)data.data[p+k]=softened[p+k];}
+   } else data.data.set(softened);
+   g.putImageData(data,0,0);return cv;
+ }
+ function loadRuntime(){if(runtimePromise)return runtimePromise;runtimePromise=new Promise((resolve,reject)=>{
+     if(window.ort){resolve(window.ort);return;}
+     const scr=document.createElement('script');scr.src=runtimeURL+'ort.min.js';scr.async=true;
+     const watchdog=setTimeout(()=>{scr.remove();reject(new Error('Le moteur IA n’a pas pu être chargé. Vérifiez la connexion.'));},35000);
+     scr.onload=()=>{clearTimeout(watchdog);window.ort?resolve(window.ort):reject(new Error('Le moteur IA ne répond pas.'));};
+     scr.onerror=()=>{clearTimeout(watchdog);reject(new Error('Impossible de télécharger le moteur IA.'));};document.head.append(scr);
+   }).catch(e=>{runtimePromise=null;throw e;});return runtimePromise;}
+ async function loadSession(){if(sessionPromise)return sessionPromise;
+   sessionPromise=(async()=>{
+     status('Chargement du moteur Real-ESRGAN…','working');const ort=await loadRuntime();
+     ort.env.wasm.wasmPaths=runtimeURL;ort.env.wasm.numThreads=1;
+     status('Téléchargement du modèle IA (~5 Mo), une seule fois si mis en cache…','working');
+     let response=null;try{const cache=await caches.open('tvplus-ia-real-esrgan-v1');response=await cache.match(modelURL);if(!response){response=await fetch(modelURL,{mode:'cors'});if(response.ok)await cache.put(modelURL,response.clone()).catch(()=>{});}}catch(e){response=await fetch(modelURL,{mode:'cors'});}
+     if(!response||!response.ok)throw new Error('Fichier Real-ESRGAN inaccessible. Le mode rapide reste disponible.');
+     const bytes=await response.arrayBuffer();if(bytes.byteLength<1000000)throw new Error('Fichier du modèle incomplet.');
+     status('Initialisation du moteur IA sur votre appareil…','working');await tick();
+     const session=await ort.InferenceSession.create(bytes,{executionProviders:['wasm'],graphOptimizationLevel:'basic'});
+     if(!session.inputNames.length||!session.outputNames.length)throw new Error('Modèle incompatible.');
+     return {ort,session};
+   })().catch(e=>{sessionPromise=null;throw e;});return sessionPromise;
+ }
+ async function aiProcess(){
+   const input=current.source,factor=current.mode==='ai2'?2:4;
+   const safeLong=innerWidth<=760?640:1024,maxArea=innerWidth<=760?320000:680000;
+   if(Math.max(input.width,input.height)>safeLong||input.width*input.height>maxArea)throw new Error(`Le mode IA convient aux petites images (maximum ${safeLong} px sur le grand côté et ${Math.round(maxArea/1000)} kpx). Pour une grande photo, utilisez l’amélioration rapide : elle conserve davantage de détails.`);
+   const {ort,session}=await loadSession();const W=input.width,H=input.height;
+   const sourceCV=createCanvas(W,H),sourceCtx=sourceCV.getContext('2d',{willReadFrequently:true});sourceCtx.drawImage(input,0,0,W,H);
+   const full=createCanvas(W*4,H*4),fullCtx=full.getContext('2d');
+   const tile=innerWidth<=760?80:112,pad=8,total=Math.ceil(W/tile)*Math.ceil(H/tile);let done=0;
+   for(let y=0;y<H;y+=tile){for(let x=0;x<W;x+=tile){
+     if(current.cancel)throw new Error('Traitement interrompu.');
+     const tw=Math.min(tile,W-x),th=Math.min(tile,H-y),iw=tw+pad*2,ih=th+pad*2;
+     const sample=createCanvas(iw,ih),sg=sample.getContext('2d',{willReadFrequently:true});
+     sg.drawImage(sourceCV,-x+pad,-y+pad);
+     const pixels=sg.getImageData(0,0,iw,ih).data,plane=iw*ih,inputData=new Float32Array(plane*3);
+     for(let p=0,q=0;p<plane;p++,q+=4){inputData[p]=pixels[q]/255;inputData[plane+p]=pixels[q+1]/255;inputData[plane*2+p]=pixels[q+2]/255;}
+     const t=new ort.Tensor('float32',inputData,[1,3,ih,iw]);
+     const result=await session.run({[session.inputNames[0]]:t});
+     const out=result[session.outputNames[0]],ow=out.dims[3],oh=out.dims[2],arr=out.data;
+     if(!arr||ow!==iw*4||oh!==ih*4)throw new Error('Le modèle IA a renvoyé des dimensions inattendues.');
+     const dst=fullCtx.createImageData(tw*4,th*4),od=dst.data,outputPlane=ow*oh;
+     for(let yy=0;yy<th*4;yy++)for(let xx=0;xx<tw*4;xx++){
+       const si=(yy+pad*4)*ow+xx+pad*4,di=(yy*tw*4+xx)*4;
+       od[di]=clamp(Math.round(arr[si]*255),0,255);od[di+1]=clamp(Math.round(arr[outputPlane+si]*255),0,255);od[di+2]=clamp(Math.round(arr[outputPlane*2+si]*255),0,255);od[di+3]=255;
+     }
+     fullCtx.putImageData(dst,x*4,y*4);done++;status(`Super-résolution locale : ${done} / ${total} blocs…`,'working');await tick();
+   }}
+   if(factor===4)return full;
+   const resized=createCanvas(W*2,H*2);const rg=resized.getContext('2d');rg.imageSmoothingEnabled=true;rg.imageSmoothingQuality='high';rg.drawImage(full,0,0,resized.width,resized.height);return resized;
+ }
+ async function process(auto){if(!current.source||current.busy)return;
+   if(auto&&current.mode==='fast')autoSettings();
+   current.cancel=false;setBusy(true);
+   try{status(current.mode==='fast'?'Analyse et amélioration des pixels…':'Préparation de la super-résolution IA…','working');await tick();
+     const result=current.mode==='fast'?await fastProcess():await aiProcess();if(current.cancel)return;
+     current.output=result;current.processedMode=current.mode;drawCompare();$('enhanceCompare').value='55';box.style.setProperty('--split','55%');
+     status(`Image améliorée : ${dims(result)} px. Comparez avant/après, puis exportez ou insérez dans une affiche.`, 'success');
+   }catch(err){status('Traitement impossible : '+(err?.message||String(err)),'error');console.warn('TV+ enhancement:',err);}
+   finally{setBusy(false);}
+ }
+ function outputBlob(cb){if(!current.output)return;current.output.toBlob(blob=>{if(!blob){status('Impossible de créer le PNG.','error');return;}cb(blob);},'image/png');}
+ function save(){outputBlob(blob=>{const url=URL.createObjectURL(blob),a=document.createElement('a');a.download=`${current.name}-${current.processedMode==='fast'?'amelioree':'ia-'+current.processedMode}.png`;a.href=url;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),15000);});}
+ async function outputImage(){if(!current.output)return null;return await loadImage(current.output.toDataURL('image/png'));}
+ async function sendToPoster(){if(!current.output||current.busy)return;
+   try{const img=await outputImage();state.image=img;state.sample=false;state.zoom=100;state.dx=0;state.dy=0;
+     $('zoom').value='100';$('zoomLabel').textContent='100 %';$('photoName').textContent=`Photo améliorée · ${dims(img)} px`;draw();dlg.close();
+   }catch(err){status('Impossible de transférer l’image dans l’affiche.','error');}
+ }
+ async function sendToCrop(){if(!current.output||current.busy)return;
+   try{const img=await outputImage();dlg.close();$('openCropTool').click();document.dispatchEvent(new CustomEvent('tvplus:load-enhanced-in-crop',{detail:{image:img,name:`${current.name}-amelioree.png`}}));}
+   catch(err){status('Impossible de transférer l’image au recadrage.','error');}
+ }
+ $('openEnhanceTool').addEventListener('click',()=>{
+   $('enhanceUsePoster').disabled=!state.image||state.sample;dlg.showModal();drawCompare();
+ });
+ $('enhanceClose').addEventListener('click',()=>{current.cancel=true;dlg.close();});
+ dlg.addEventListener('close',()=>current.cancel=true);
+ $('enhanceUsePoster').addEventListener('click',()=>{if(state.image&&!state.sample)loadSourceImage(state.image,$('photoName').textContent||'photo-affiche');});
+ $('enhanceInput').addEventListener('change',event=>{
+   const file=event.target.files?.[0];event.target.value='';if(!file)return;
+   if(!/^image\/(jpeg|png|webp)$/.test(file.type)||file.size>limits.maxFile){status('Choisissez un fichier JPG, PNG ou WEBP de 30 Mo maximum.','error');return;}
+   loadFile(file,(img,name)=>loadSourceImage(img,name));
+ });
+ Object.entries(modeBtns).forEach(([mode,btn])=>btn.addEventListener('click',()=>setMode(mode)));
+ for(const id of ['Light','Contrast','Color','Noise','Sharp'])$('enhance'+id).addEventListener('input',()=>{updateSliderLabels();if(current.source&&!current.busy&&current.mode==='fast')status('Réglages modifiés : cliquez sur « Appliquer les réglages ».');});
+ $('enhanceAuto').addEventListener('click',()=>process(true));$('enhanceProcess').addEventListener('click',()=>process(false));
+ $('enhanceExport').addEventListener('click',save);$('enhanceUsePosterOutput').addEventListener('click',sendToPoster);$('enhanceUseCrop').addEventListener('click',sendToCrop);
+ $('enhanceCompare').addEventListener('input',e=>box.style.setProperty('--split',e.target.value+'%'));
+ // Compare directly with mouse/touch dragging, without intercepting page scroll.
+ let compareDragging=false;
+ box.addEventListener('pointerdown',e=>{compareDragging=true;box.setPointerCapture(e.pointerId);});
+ box.addEventListener('pointermove',e=>{if(!compareDragging)return;const r=box.getBoundingClientRect(),v=Math.round(clamp((e.clientX-r.left)/r.width*100,0,100));$('enhanceCompare').value=v;box.style.setProperty('--split',v+'%');});
+ for(const event of ['pointerup','pointercancel','lostpointercapture'])box.addEventListener(event,()=>compareDragging=false);
+ updateSliderLabels();drawCompare();setBusy(false);
+})();
+
+</script>
+</body>
 </html>
