@@ -110,6 +110,8 @@ async function applySaved(mode){
    speaker:row.speaker||"",role:row.role||"",fontScale:state.fontScale,pastilleLineHeight:state.lineHeight,pastilleLetterSpacing:state.letterSpacing,fontFamily:state.fontFamily,
    fontWeight:state.fontWeight,zoom:state.zoom,darkness:state.darkness,webText:state.website};
   for(const [id,value] of Object.entries(edits)){const el=$(id);if(el)el.value=value;}
+  // Preserve the selected official TV+ rubric, including old saved spelling/values.
+  if(typeof setCategoryValue==="function")setCategoryValue(row.category||"");
   const values={fontScaleLabel:state.fontScale+" %",pastilleLineHeightLabel:state.lineHeight.toFixed(2).replace('.',',')+"×",pastilleLetterSpacingLabel:(state.letterSpacing>0?'+':'')+String(state.letterSpacing).replace('.',',')+" px",zoomLabel:state.zoom+" %",darknessLabel:state.darkness+" %",photoName:photo?"Photo retrouvée dans le brouillon":"Photo du modèle"};
   for(const [id,value] of Object.entries(values))if($(id))$(id).textContent=value;
   renderTokens();draw();status("Brouillon retrouvé · "+labels[mode],"ok");return true;
