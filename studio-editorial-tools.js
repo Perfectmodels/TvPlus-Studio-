@@ -141,19 +141,47 @@ dlg.innerHTML=`
  </div>
  <div class="studio-editorial-main">
  <section data-toolpanel="caption" class="studio-tool-panel">
-  <p class="studio-note">Modèle provisoire sans IA. Lorsque vous transmettrez la légende officielle, nous pourrons reproduire exactement la charte TV+.</p>
+  <p class="studio-note">Quatre modèles officiels TV+ · gras Unicode conservé au collage sur Facebook · rédaction sans IA.</p>
   <div class="studio-form-grid">
-   <label>Catégorie <input id="studioCaptionCategory" placeholder="Ex. Économie" maxlength="60"></label>
-   <label>Lien de l'article <input id="studioCaptionLink" type="url" placeholder="https://l.tvplusafrique.com/..." inputmode="url"></label>
+   <label>Type de publication
+    <select id="studioCaptionType">
+     <option value="lire">📺 À lire</option>
+     <option value="alerte">🚨 Alerte info</option>
+     <option value="reportage">📺 Reportage</option>
+     <option value="60secondes">📺 En 60 secondes</option>
+    </select>
+   </label>
+   <label>Lien court de l’article (À lire)
+    <input id="studioCaptionLink" type="url" placeholder="https://l.tvplusafrique.com/..." inputmode="url" autocomplete="off">
+   </label>
   </div>
-  <label>Introduction facultative <textarea id="studioCaptionIntro" rows="2" placeholder="Une ou deux phrases factuelles pour accompagner le titre."></textarea></label>
-  <div class="studio-form-grid">
-   <label>Appel à l'action <input id="studioCaptionCTA" value="Lire l’article :" maxlength="100"></label>
-   <label>Hashtags <input id="studioCaptionHashtags" value="#TVPlusAfrique" maxlength="180"></label>
-  </div>
-  <div class="studio-tool-subtitle">Légende générée depuis le titre de l’affiche</div>
-  <textarea id="studioCaptionPreview" rows="8" aria-label="Légende prête à copier"></textarea>
-  <div class="studio-editorial-actions"><button id="studioCaptionRefresh" type="button">Régénérer depuis le titre</button><button id="studioCaptionCopy" class="studio-accent" type="button">Copier la légende</button></div>
+  <details class="studio-shortener" id="studioShortenerPanel">
+   <summary>Raccourcir un lien avec Rebrandly · l.tvplusafrique.com</summary>
+   <p class="studio-note">Cette action utilisera Rebrandly uniquement après configuration des secrets dans Vercel. L’accès est réservé à la rédaction.</p>
+   <label>Adresse complète de l’article
+    <input id="studioShortDestination" placeholder="https://www.tvplusafrique.com/..." type="url" inputmode="url" autocomplete="off">
+   </label>
+   <div class="studio-form-grid">
+    <label>Nom court facultatif
+     <input id="studioShortSlug" maxlength="40" autocomplete="off" placeholder="Ex. article-gabon">
+    </label>
+    <label>Code d’accès rédaction
+     <input id="studioShortAccess" type="password" autocomplete="off" placeholder="Code défini dans Vercel">
+    </label>
+   </div>
+   <div class="studio-editorial-actions"><button type="button" class="studio-accent" id="studioShortenAction">Créer le lien court</button></div>
+   <p id="studioShortenStatus" class="studio-note" role="status"></p>
+  </details>
+  <label>Présentation supplémentaire (facultatif)
+   <textarea id="studioCaptionIntro" rows="2" placeholder="Un contexte factuel, uniquement si nécessaire."></textarea>
+  </label>
+  <label>Hashtags complémentaires
+   <input id="studioCaptionHashtags" maxlength="350" placeholder="#Gabon #CESEC #JacquesSima">
+   <small style="display:block;color:#90a9c5;margin:5px 0">#TVPlusAfrique et le hashtag du format sont ajoutés automatiquement.</small>
+  </label>
+  <div class="studio-tool-subtitle">Aperçu de la légende · titre repris depuis l’affiche</div>
+  <textarea id="studioCaptionPreview" rows="8" aria-label="Légende TV+ prête à copier avec gras Unicode" spellcheck="false"></textarea>
+  <div class="studio-editorial-actions"><button id="studioCaptionRefresh" type="button">Régénérer depuis l’affiche</button><button id="studioCaptionCopy" class="studio-accent" type="button">Copier la légende</button></div>
   <p id="studioCaptionStatus" class="studio-note" role="status"></p>
  </section>
  <section data-toolpanel="drafts" class="studio-tool-panel" hidden>
@@ -201,6 +229,13 @@ style.textContent=`
 .studio-tool-panel label{display:block;font-size:12px;font-weight:750;color:#d3e0f1;margin-bottom:12px}
 .studio-tool-panel input,.studio-tool-panel select,.studio-tool-panel textarea{width:100%;border:1px solid #354a66;border-radius:8px;background:#0a1425;color:white;padding:10px;margin-top:5px;min-height:39px;font:inherit}
 .studio-tool-panel textarea{resize:vertical;line-height:1.5}
+.studio-shortener{border:1px solid #40516c;border-radius:10px;padding:10px 13px;margin:0 0 14px;background:#13243a}
+.studio-shortener summary{cursor:pointer;color:#ffcb4b;font-weight:800;font-size:12px;line-height:1.35}
+.studio-shortener[open] summary{margin-bottom:11px}
+.studio-shortener label{margin-bottom:9px}
+.studio-shortener .studio-editorial-actions{margin:7px 0}
+#studioShortenStatus{min-height:16px}
+
 #studioCaptionPreview{min-height:145px}
 .studio-form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .studio-tool-subtitle{font-size:13px;font-weight:850;color:white;margin:12px 0 7px}
@@ -242,7 +277,7 @@ function tab(key){
  dlg.querySelectorAll("[data-tooltab]").forEach(b=>{const active=b.dataset.tooltab===key;b.classList.toggle("active",active);b.setAttribute("aria-selected",String(active));});
  dlg.querySelectorAll("[data-toolpanel]").forEach(p=>p.hidden=p.dataset.toolpanel!==key);
  if(key==="drafts")updateLibrary();
- if(key==="caption")generateCaption();
+ if(key==="caption")prepareCaptionOnOpen();
  if(key==="quality")check();
 }
 function show(key="caption"){tab(key);dlg.showModal();}
@@ -250,7 +285,7 @@ openBtn.addEventListener("click",()=>show("caption"));
 $("studioCloseTools").addEventListener("click",()=>dlg.close());
 $("studioCloseFooter").addEventListener("click",()=>dlg.close());
 dlg.querySelectorAll("[data-tooltab]").forEach(b=>b.addEventListener("click",()=>tab(b.dataset.tooltab)));
-const fields=["studioCaptionCategory","studioCaptionLink","studioCaptionIntro","studioCaptionCTA","studioCaptionHashtags"];
+const fields=["studioCaptionType","studioCaptionLink","studioCaptionIntro","studioCaptionHashtags"];
 function saveCaptionSettings(){
  const v={};for(const id of fields)v[id]=$(id).value;
  try{localStorage.setItem(stateKey,JSON.stringify(v));}catch(_){}
@@ -258,29 +293,118 @@ function saveCaptionSettings(){
 function loadCaptionSettings(){
  try{const v=JSON.parse(localStorage.getItem(stateKey)||"{}");for(const id of fields)if(typeof v[id]==="string")$(id).value=v[id];}catch(_){}
 }
-let lastAutoCategory="";
+function boldSerif(text){
+ // Mathematical bold serif Unicode renders as bold text after pasting into Facebook.
+ // Preserve accented French characters when no precomposed mathematical glyph exists.
+ return [...String(text||"")].map(ch=>{
+  const n=ch.codePointAt(0);
+  if(n>=65&&n<=90)return String.fromCodePoint(0x1D400+n-65);
+  if(n>=97&&n<=122)return String.fromCodePoint(0x1D41A+n-97);
+  if(n>=48&&n<=57)return String.fromCodePoint(0x1D7CE+n-48);
+  return ch;
+ }).join("");
+}
+const titles={
+ lire:"📺 𝗧𝗩+ | À 𝗹𝗶𝗿𝗲",
+ alerte:"🚨 𝗧𝗩+ | 𝗔𝗟𝗘𝗥𝗧𝗘 𝗜𝗡𝗙𝗢",
+ reportage:"📺 𝗧𝗩+ | 𝗥𝗘𝗣𝗢𝗥𝗧𝗔𝗚𝗘",
+ "60secondes":"📺 𝗧𝗩+ | 𝗘𝗡 𝟲𝟬 𝗦𝗘𝗖𝗢𝗡𝗗𝗘𝗦"
+};
+const whatsapp="📲 𝗦𝘂𝗶𝘃𝗲𝘇-𝗻𝗼𝘂𝘀 𝘀𝘂𝗿 𝗪𝗵𝗮𝘁𝘀𝗔𝗽𝗽 https://l.tvplusafrique.com/xw7b";
+function uniqueTags(type,extra){
+ const defaults=["#TVPlusAfrique"];
+ if(type==="alerte")defaults.push("#AlerteInfo");
+ if(type==="reportage")defaults.push("#Reportage");
+ if(type==="60secondes")defaults.push("#60Secondes");
+ const tags=[...defaults,...String(extra||"").split(/[\s,;]+/).map(x=>x.trim()).filter(Boolean)];
+ const found=new Set();return tags.filter(tag=>{
+  if(!/^#[^\s#]+$/u.test(tag))return false;
+  const key=tag.toLocaleLowerCase("fr");
+  if(found.has(key))return false;found.add(key);return true;
+ });
+}
+let initializedCaption=false;
+function suggestedType(){
+ if(state.mode==="alerte")return "alerte";
+ return "lire";
+}
 function generateCaption(){
- let auto=state.mode==="pastille"||state.mode==="decryptage"?(state.category||labels[state.mode]):labels[state.mode];
- if(!$("studioCaptionCategory").value||$("studioCaptionCategory").value===lastAutoCategory)$("studioCaptionCategory").value=auto;
- lastAutoCategory=auto;
- const cat=$("studioCaptionCategory").value.trim().toUpperCase(),intro=$("studioCaptionIntro").value.trim(),
-  url=$("studioCaptionLink").value.trim(),cta=$("studioCaptionCTA").value.trim(),hashtags=$("studioCaptionHashtags").value.trim();
- const lines=["TV+ | "+(cat||"ACTUALITÉ"),"",state.headline.trim()||"[Titre à renseigner]"];
+ const type=$("studioCaptionType").value||"lire";
+ const title=(state.headline||"").trim()||"[Titre de l’actualité à compléter]";
+ const link=$("studioCaptionLink").value.trim();
+ const intro=$("studioCaptionIntro").value.trim();
+ const lines=[titles[type]||titles.lire];
+ if(type==="alerte")lines.push("");
+ lines.push("🔴 "+boldSerif(title));
  if(intro)lines.push("",intro);
- if(url)lines.push("",(cta||"Lire l'article :")+" "+url);
- if(hashtags)lines.push("",hashtags);
+ if(type==="lire"){
+  lines.push("📰 𝗟’𝗮𝗿𝘁𝗶𝗰𝗹𝗲 𝗰𝗼𝗺𝗽𝗹𝗲𝘁 👉 "+(link||"[Lien de l’article à ajouter]"));
+ }
+ lines.push(whatsapp,"",uniqueTags(type,$("studioCaptionHashtags").value).join(" "));
  $("studioCaptionPreview").value=lines.join("\n");
+}
+function prepareCaptionOnOpen(){
+ if(!initializedCaption){
+  $("studioCaptionType").value=suggestedType();
+  initializedCaption=true;
+ }
+ generateCaption();
 }
 loadCaptionSettings();
 fields.forEach(id=>$(id).addEventListener("input",()=>{saveCaptionSettings();generateCaption();}));
 $("studioCaptionRefresh").addEventListener("click",generateCaption);
 $("studioCaptionCopy").addEventListener("click",async()=>{
  const text=$("studioCaptionPreview").value;
+ if($("studioCaptionType").value==="lire"&&!$("studioCaptionLink").value.trim()){
+  $("studioCaptionStatus").textContent="Ajoutez le lien de l’article avant de publier la légende.";
+  $("studioCaptionLink").focus();return;
+ }
  try{
   if(navigator.clipboard&&window.isSecureContext)await navigator.clipboard.writeText(text);
   else{$("studioCaptionPreview").select();if(!document.execCommand("copy"))throw Error("Copie non disponible");}
-  $("studioCaptionStatus").textContent="Légende copiée. Vérifiez les informations avant publication sur Facebook.";
- }catch(_){$("studioCaptionStatus").textContent="Copie automatique impossible : sélectionnez le texte ci-dessus.";$("studioCaptionPreview").focus();$("studioCaptionPreview").select();}
+  $("studioCaptionStatus").textContent="Légende copiée avec le gras Unicode. Vérifiez l’exactitude du titre et des hashtags.";
+ }catch(_){$("studioCaptionStatus").textContent="Copie impossible : sélectionnez le texte ci-dessus.";$("studioCaptionPreview").focus();$("studioCaptionPreview").select();}
+});
+let shortenerConfigured=null;
+async function checkShortener(){
+ const label=$("studioShortenStatus");
+ try{
+  const res=await fetch("/api/shorten",{method:"GET",cache:"no-store"});
+  if(!res.ok)throw Error("Endpoint indisponible");
+  const result=await res.json();
+  shortenerConfigured=Boolean(result.configured);
+  label.textContent=shortenerConfigured?"Rebrandly configuré côté serveur. Entrez le code d’accès pour créer un lien.":"Raccourcisseur préparé, mais les secrets Rebrandly ne sont pas encore configurés dans Vercel.";
+ }catch(_){
+  shortenerConfigured=false;
+  label.textContent="Connexion Rebrandly non activée. Le générateur de légendes reste utilisable sans connexion.";
+ }
+}
+$("studioShortenerPanel").addEventListener("toggle",()=>{
+ if($("studioShortenerPanel").open)checkShortener();
+});
+$("studioShortenAction").addEventListener("click",async()=>{
+ const status=$("studioShortenStatus"),action=$("studioShortenAction");
+ const destination=$("studioShortDestination").value.trim();
+ const access=$("studioShortAccess").value;
+ if(!/^https:\/\/(?:[a-z0-9-]+\.)*tvplusafrique\.com(?:[/:?#]|$)/i.test(destination)){
+  status.textContent="Insérez une URL HTTPS de tvplusafrique.com.";return;
+ }
+ if(!access){status.textContent="Le code d’accès de la rédaction est nécessaire.";return;}
+ action.disabled=true;status.textContent="Création du lien court…";
+ try{
+  const response=await fetch("/api/shorten",{
+   method:"POST",headers:{"Content-Type":"application/json","X-TVPLUS-ACCESS":access},
+   body:JSON.stringify({destination,title:state.headline||"TV+ Afrique",slashtag:$("studioShortSlug").value.trim()})
+  });
+  const result=await response.json();
+  if(!response.ok)throw Error(result.error||"Création du lien impossible");
+  if(!result.shortUrl||!result.shortUrl.startsWith("https://l.tvplusafrique.com/"))throw Error("Le lien retourné n’utilise pas le domaine TV+.");
+  $("studioCaptionLink").value=result.shortUrl;
+  saveCaptionSettings();generateCaption();
+  status.textContent="Lien court créé et ajouté à la légende : "+result.shortUrl;
+  $("studioCaptionStatus").textContent="Le lien de l’article a été ajouté à votre légende.";
+ }catch(err){status.textContent=err?.message||"La création du lien a échoué.";}
+ finally{action.disabled=false;}
 });
 function updateLibrary(){
  const list=$("studioDraftList");if(!list)return;list.replaceChildren();
