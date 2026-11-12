@@ -44,3 +44,13 @@ Le site est un fichier `index.html` sans étape de build. Toute modification de 
 ## Limites
 
 Il n'y a pas encore de comptes utilisateurs, bibliothèque partagée ni intégration au CMS ou aux réseaux sociaux. Les photographies importées ne sont pas enregistrées côté serveur.
+
+## Rédaction, brouillons et contrôle qualité (nouveauté)
+
+Le bouton **Rédaction & brouillons** est situé dans l'en-tête, sans réduire la surface de travail des quatre modèles. Il ouvre une fenêtre avec trois onglets :
+
+1. **Légende Facebook** : modèle de légende déterministe sans IA, calculé depuis la catégorie et le titre de l'affiche. Introduction facultative, CTA, hashtags et URL sont modifiables. Le lien raccourci Rebrandly peut être collé manuellement ; **aucune clé API n'est demandée**. Il ne s'agit pas encore de la charte définitive TV+ Afrique, en attente du modèle fourni par la rédaction.
+2. **Brouillons** : sauvegarde automatique via **IndexedDB natif** (aucun service ni serveur). Sauvegarde par format, rappel après rechargement du même navigateur, reprise et suppression. Les images importées sont stockées comme Blobs dans la mesure des quotas disponibles ; les images très grandes peuvent être redimensionnées pour la copie locale. Les brouillons ne sont pas synchronisés entre appareils et peuvent disparaître si le navigateur efface les données locales.
+3. **Qualité & formats** : contrôle du titre, de la photographie d'exemple, de la présence d'une signature Verbatim et des contraintes de dimension/texte. Export léger **WebP** ou **JPEG**, avec qualité choisie, sans supprimer le bouton PNG original. Le contrôle signale les risques mais ne remplace pas la validation éditoriale.
+
+Ces fonctionnalités fonctionnent dans le navigateur et ne publient pas automatiquement sur Facebook. **Le traitement d'images local et les modèles d'affiche préexistants restent inchangés.**
