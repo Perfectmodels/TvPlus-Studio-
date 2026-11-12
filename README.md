@@ -76,3 +76,15 @@ L'API Rebrandly est appelée uniquement côté serveur via `POST /api/shorten`. 
 **Sécurité à connaître :** sans code d'accès ni authentification, le point d'accès est public. La vérification d'origine et la limitation en mémoire réduisent les abus courants mais ne constituent pas une authentification fiable et la limitation en mémoire n'est pas partagée entre toutes les instances Vercel. Pour un usage réel avec la clé API active, restreignez l'accès à la rédaction via une authentification du site ou un mécanisme anti-abus persistant (Vercel Firewall / limitation de débit). Ne considérez pas cette API comme protégée tant que cette couche n'est pas en place.
 
 Le serveur interroge `GET /v1/domains` et `POST /v1/links`. Le domaine `l.tvplusafrique.com` doit être disponible dans le compte lié à la clé Rebrandly.
+
+### Hashtags automatiques (sans IA)
+
+Le panneau **Légende Facebook** propose désormais un bouton **Générer les hashtags**. À l'ouverture, le module extrait automatiquement les noms propres, acronymes (CESEC, INFASS), lieux, compétitions, thématiques et expressions courantes du **titre de l'affiche**, puis propose des hashtags (par exemple `#JacquesSima`, `#CESEC`, `#NationalFoot1`, `#Dakar2026`). Les suggestions sont calculées par règles JavaScript, sans service externe ni intelligence artificielle.
+
+- Les propositions les plus pertinentes sont activées par défaut ; cliquer sur une pastille permet de l'activer ou désactiver.
+- Le champ **Ajouter des hashtags personnalisés** conserve la possibilité d'écrire des hashtags libres.
+- `#TVPlusAfrique` et le hashtag propre au format (`#AlerteInfo`, `#Reportage` ou `#60Secondes`) sont insérés automatiquement.
+- Les doublons sont éliminés, y compris entre hashtags générés et saisis manuellement.
+- La légende et ses hashtags restent modifiables avant copie.
+
+Les règles de détection de noms propres ne remplacent pas la vérification humaine ; la rédaction doit vérifier les suggestions avant publication.
