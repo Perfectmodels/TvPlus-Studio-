@@ -43,7 +43,7 @@ css.textContent=".tvplus-openai-assistant{background:#13243a;color:#f2f6ff;borde
 document.head.append(css);
 const stat=$("tvplusAIStatus"),output=$("tvplusAIText"),choices=$("tvplusAIChoices");
 const task=$("tvplusAITask"),scope=$("tvplusAIScope"),auto=$("tvplusAIAuto");
-try{auto.checked=sessionStorage.getItem("tvplus-ai-auto")==="1"}catch(_){}
+try{auto.checked=sessionStorage.getItem("tvplus-ai-auto")!=="0"}catch(_){}
 function title(){
  const linked=window.TVPlusAutoArticle?.current;
  return kind.value==="lire"?String($("studioCaptionTitle")?.value||linked?.title||"").trim():
@@ -95,7 +95,7 @@ async function run(name,automatic=false){
    const current=window.TVPlusAutoArticle?.current;
    if(!current||current.title!==input.title||kind.value!=="lire")return;
    const proposed=[...(data.result.options||[]),data.result.title].find(x=>typeof x==="string"&&[...x].length<=75&&x.trim().split(/\s+/).length<=12);
-   if(proposed){const dest=$("studioCaptionTitle");dest.value=proposed;dest.dispatchEvent(new Event("input",{bubbles:true}))}
+   if(proposed){const dest=$("studioCaptionTitle");dest.value=window.TVPlusHeadlineCase?.(proposed)||proposed;dest.dispatchEvent(new Event("input",{bubbles:true}))}
    if(data.result.hashtags?.length){
     const target=$("studioCaptionHashtags");target.value=data.result.hashtags.join(" ");target.dispatchEvent(new Event("input",{bubbles:true}));
    }
