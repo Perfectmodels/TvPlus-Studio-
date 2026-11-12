@@ -33,7 +33,7 @@ async function deleteDraft(mode){
 function status(text,kind=""){const x=$("studioSaveStatus");if(x){x.textContent=text;x.dataset.kind=kind;}}
 function readSnapshot(){
  return {
-  mode:state.mode,headline:state.headline,category:state.category,
+  mode:state.mode,headline:state.headline,articleFullTitle:state.articleFullTitle||'',category:state.category,
   details:$("details")?.value||"",speaker:$("speaker")?.value||"",role:$("role")?.value||"",
   highlighted:[...state.highlightedIndices],sizes:[...state.wordSizes],
   fontScale:state.fontScale,lineHeight:state.lineHeight,letterSpacing:state.letterSpacing,fontFamily:state.fontFamily,fontWeight:state.fontWeight,
@@ -95,6 +95,7 @@ async function applySaved(mode){
   const logo=await decodeBlob(row.logoBlob);
   if(state.mode!==mode)return false;
   state.headline=row.headline||"";
+  state.articleFullTitle=row.articleFullTitle||"";
   state.category=row.category||"";
   state.highlightedIndices=new Set(row.highlighted||[]);
   state.wordSizes=new Map(row.sizes||[]);
@@ -105,7 +106,7 @@ async function applySaved(mode){
   state.zoom=Number(row.zoom)||100;state.dx=Number(row.dx)||0;state.dy=Number(row.dy)||0;
   if(photo){state.image=photo;state.sample=false;}
   if(logo)state.logo=logo;
-  const edits={headline:row.headline||"",category:row.category||"",details:row.details||"",
+  const edits={headline:row.headline||"",articleFullTitle:row.articleFullTitle||"",category:row.category||"",details:row.details||"",
    speaker:row.speaker||"",role:row.role||"",fontScale:state.fontScale,pastilleLineHeight:state.lineHeight,pastilleLetterSpacing:state.letterSpacing,fontFamily:state.fontFamily,
    fontWeight:state.fontWeight,zoom:state.zoom,darkness:state.darkness,webText:state.website};
   for(const [id,value] of Object.entries(edits)){const el=$(id);if(el)el.value=value;}
@@ -117,6 +118,7 @@ async function applySaved(mode){
 function qualityIssues(){
  const list=[];
  if(!state.headline.trim())list.push("Le titre ou la citation est vide.");
+ if(state.mode==="pastille"&&(state.headline.trim().length>70||state.headline.trim().split(/\s+/).length>12))list.push("Le titre court de la pastille est trop long : réduisez-le à 70 caractères ou 12 mots recommandés.");
  if(!state.image)list.push("Aucune photo n'est chargée.");
  else if(state.sample)list.push("La photo affichée est un exemple : remplacez-la avant publication.");
  if($("fitStatus")?.classList.contains("warning"))list.push("Le texte a été fortement réduit pour tenir dans l'affiche.");
@@ -427,10 +429,11 @@ function titleKeywords(title,category){
 }
 let suggestedHashtags=[],chosenHashtags=new Set(),hashtagSignature="";
 function syncHashtagSuggestions(force=false){
- const signature=String(state.headline||"")+"|"+String(state.category||"");
+ const relevantTitle=state.mode==="pastille"&&state.articleFullTitle?.trim()?state.articleFullTitle:state.headline;
+ const signature=String(relevantTitle||"")+"|"+String(state.category||"");
  if(!force&&hashtagSignature===signature)return;
  hashtagSignature=signature;
- suggestedHashtags=titleKeywords(state.headline,state.category);
+ suggestedHashtags=titleKeywords(relevantTitle,state.category);
  chosenHashtags=new Set(suggestedHashtags.filter(x=>x.score>=60).slice(0,4).map(x=>x.tag));
  if(!chosenHashtags.size&&suggestedHashtags.length)chosenHashtags.add(suggestedHashtags[0].tag);
  renderHashtagSuggestions();
@@ -466,7 +469,8 @@ function suggestedType(){
 }
 function generateCaption(){
  const type=$("studioCaptionType").value||"lire";
- const title=(state.headline||"").trim()||"[Titre de l’actualité à compléter]";
+ const full=state.mode==="pastille"&&state.articleFullTitle?.trim()?state.articleFullTitle:state.headline;
+ const title=(full||"").trim()||"[Titre de l’actualité à compléter]";
  const link=$("studioCaptionLink").value.trim();
  const intro=$("studioCaptionIntro").value.trim();
  const lines=[titles[type]||titles.lire];
