@@ -37,7 +37,7 @@ function normalizeHeadline(value){
  const letters=[...text].filter(ch=>/\p{L}/u.test(ch));
  if(letters.length<5||letters.filter(ch=>ch===ch.toLocaleUpperCase("fr")&&ch!==ch.toLocaleLowerCase("fr")).length/letters.length<0.85)return text;
  const protectedAcronyms=new Set(["TV","CFA","FCFA","ONU","OMS","UE","UA","CESEC","PDG","CNOU","PNPE","CAN","FIFA","OIF","ONG","IA","PME","PIB","G7","G20"]);
- let lower=text.toLocaleLowerCase("fr").replace(/(^|[.!?]\\s+)([\\p{L}])/gu,(_m,start,l)=>start+l.toLocaleUpperCase("fr"));
+ let lower=text.toLocaleLowerCase("fr").replace(/(^|[.!?]\s+)([\p{L}])/gu,(_m,start,l)=>start+l.toLocaleUpperCase("fr"));
  lower=lower.replace(/\b[\p{L}]{2,12}\b/gu,w=>protectedAcronyms.has(w.toUpperCase())?w.toUpperCase():w);
  lower=lower.replace(/\b(gabon|gabonais|gabonaises|libreville|mayumba|oyem|port-gentil|france|chine|afrique)\b/gi,w=>w[0].toLocaleUpperCase("fr")+w.slice(1));
  return lower;
