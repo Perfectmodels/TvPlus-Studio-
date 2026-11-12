@@ -21,7 +21,7 @@
  }
  function sentences(body){
   // Retain paragraph boundaries and split journalistic sentences.
-  return body.split(/\n{1,}|\s+(?<=[.!?])(?=[«“"A-ZÀ-ÖØ-Þ0-9])/u)
+  return body.split(/\n{1,}|(?<=[.!?])\s+(?=[«“"A-ZÀ-ÖØ-Þ0-9])/u)
    .map(s=>s.trim().replace(/^[•–—\-\d.)\s]+/u,""))
    .filter(s=>s.length>=22&&s.length<=1200&&!/^https?:\/\//.test(s)&&!/^#/.test(s))
    .slice(0,90);
