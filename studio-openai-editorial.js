@@ -46,7 +46,7 @@ const task=$("tvplusAITask"),scope=$("tvplusAIScope"),auto=$("tvplusAIAuto");
 try{auto.checked=sessionStorage.getItem("tvplus-ai-auto")==="1"}catch(_){}
 function title(){
  const linked=window.TVPlusAutoArticle?.current;
- return kind.value==="lire"?String(linked?.title||$("studioCaptionTitle")?.value||"").trim():
+ return kind.value==="lire"?String($("studioCaptionTitle")?.value||linked?.title||"").trim():
  String($("studioOnlyTitleInput")?.value||$("headline")?.value||"").trim();
 }
 function article(){return String($("studioArticleBody")?.value||"").trim()}
@@ -56,7 +56,7 @@ function requestData(name){
  const needsArticle=["titre_court","resume","angles","seo","article","vigilance"].includes(name);
  if(needsArticle&&body.length<80)throw Error("Récupérez d’abord le contenu de l’article (80 caractères minimum).");
  if(!subject&&!body)throw Error("Saisissez un titre ou récupérez le contenu de l’article.");
- return {task:name,title:subject,article:needsArticle?body:(scope.value==="article"?body:source()),
+ return {task:name,title:name==="titre_court"&&window.TVPlusAutoArticle?.current?.title?window.TVPlusAutoArticle.current.title:subject,article:needsArticle?body:(scope.value==="article"?body:source()),
   format:kind.value||"lire",tone:$("tvplusAITone").value,language:$("tvplusAILanguage").value};
 }
 function show(result){
