@@ -373,6 +373,14 @@ dialog:not([open]) { display: none !important; }
 .tvplus-category-selector #category option{background:#101c30;color:#f6f9ff}
 .tvplus-category-hint{font-size:10px;margin:6px 0 0!important;color:#91a9c1}
 </style>
+<style>
+.enhance-openai{display:grid;gap:8px;padding:12px;border:1px solid #51708d;border-radius:12px;background:#162b45;margin-top:12px;color:#dbeafa}
+.enhance-openai label{font:700 11px Barlow,Arial,sans-serif;color:#c8dbf2}
+.enhance-openai select,.enhance-openai textarea{width:100%;min-width:0;padding:10px;border:1px solid #506b8b;border-radius:8px;background:#0b1d32;color:#fff;font:inherit}
+.enhance-openai button{padding:11px 12px;border:0;border-radius:9px;background:#ffcb34;color:#172239;font:800 12px Barlow,Arial,sans-serif;cursor:pointer}
+.enhance-openai button:disabled{opacity:.6;cursor:wait}
+#tvplusAIPhotoStatus{margin:0;line-height:1.45}
+</style>
 </head>
 <body>
 <header class="appbar new-appbar"><div class="brand"><div class="brand-mark">TV<span>+</span></div><div class="brand-text"><strong>TV+ Studio</strong><small>Atelier graphique · TV+ Afrique</small></div></div><div class="header-right"><div class="header-info"><span class="header-dot"></span>4 modèles · retouche photo locale</div></div></header>
@@ -460,6 +468,8 @@ dialog:not([open]) { display: none !important; }
 <div><label class="crop-control-label" for="cropZoom">Zoom et cadrage</label><div class="crop-zoom-row"><input id="cropZoom" max="300" min="100" step="1" type="range" value="100"/><output for="cropZoom" id="cropZoomLabel">100 %</output></div></div>
 <div><span class="crop-control-label">Déplacer précisément</span><div class="crop-nudge"><button aria-label="Déplacer l'image à gauche" data-crop-step="left" type="button">←</button><button aria-label="Déplacer l'image en haut" data-crop-step="up" type="button">↑</button><button aria-label="Déplacer l'image en bas" data-crop-step="down" type="button">↓</button><button aria-label="Déplacer l'image à droite" data-crop-step="right" type="button">→</button></div></div>
 <button id="cropReset" type="button">Recentrer l'image</button>
+<button id="tvplusCropToOpenAI" class="crop-secondary" type="button">Améliorer cette image avec OpenAI</button>
+<p class="crop-hint">Retouche facultative : l'image ne sera transmise à OpenAI qu'au lancement du traitement.</p>
 <div class="crop-divider"></div>
 
 
@@ -706,7 +716,7 @@ const initialState={headline:state.headline,category:state.category,highlightedI
 const defaults={
   pastille:{headline:sampleTitle,category:'ÉCONOMIE',details:'',speaker:'',role:''},
   alerte:{headline:alertTitle,category:'',details:'',speaker:'',role:''},
-  decryptage:{headline:'DÉGUERPISSEMENT LIBREVILLE',category:'SOCIÉTÉ',details:'Du Lac Bleu à Okala, qui profite vraiment des milliards du dédommagement foncier ?',speaker:'',role:''},
+  decryptage:{headline:'Déguerpissement à Libreville',category:'SOCIÉTÉ',details:'Du Lac Bleu à Okala, qui profite vraiment des milliards du dédommagement foncier ?',speaker:'',role:''},
   verbatim:{headline:'Le retour en politique ne dispense du devoir de bilan. Lorsqu’il réclame aujourd’hui davantage de dialogue, de renouvellement, de transparence et de démocratie interne au PDG, une question s’impose : pourquoi toutes ces exigences n’ont-elles pas été prioritaires durant les années où il disposait du pouvoir ?',category:'',details:'',speaker:'Serge William Akassaga',role:'ACTEUR POLITIQUE'}
 };
 const drafts={pastille:{...initialState,...defaults.pastille},alerte:{...defaults.alerte},decryptage:{...defaults.decryptage},verbatim:{...defaults.verbatim}};
@@ -812,7 +822,7 @@ function drawDecryptage(){
  drawLogoBox(1360,26,195,145);
  ctx.fillStyle='#ffbd0d';ctx.fillRect(944,213,290,57);
  const cat=(state.category||'DÉCRYPTAGE').toUpperCase();fitParagraph(cat,960,225,260,40,39,800,'#071434',1.0);
- const h=fitStyledHeadline((state.headline||'TITRE DU DÉCRYPTAGE').toLocaleUpperCase('fr'),944,293,595,150,67,'#ffffff');
+ const h=fitStyledHeadline((state.headline||'Titre du décryptage'),944,293,595,150,67,'#ffffff');
  const detailsStart=Math.max(476,Math.min(510,315+h.height+17));
  fitParagraph(detailText||'Votre question ou votre analyse ici.',943,detailsStart,598,756-detailsStart,40,400,'#ffffff',1.19);
  ctx.fillStyle='#fff';ctx.font='48px "Barlow",sans-serif';ctx.textAlign='left';ctx.fillText('☞',942,817);
@@ -1017,6 +1027,15 @@ document.querySelector('.preview-meta').textContent='1:1 · rendu en direct';
         <p class="enhance-note" id="enhanceModeHint" style="margin-top:6px">Correction réelle de lumière, couleur, bruit et netteté. Fonctionne sans téléchargement supplémentaire.</p>
       </div>
       <div class="enhance-quick"><button type="button" id="enhanceAuto" class="enhance-primary" disabled>✦ Améliorer automatiquement</button><button type="button" id="enhanceProcess" disabled>Appliquer les réglages</button></div>
+<section class="enhance-openai" aria-label="Retouche photo avec OpenAI">
+ <div class="enhance-label">Retouche photo avec OpenAI</div>
+ <label for="tvplusAIPhotoPreset">Type d'amélioration</label>
+ <select id="tvplusAIPhotoPreset"><option value="naturel">Naturelle — couleurs et exposition</option><option value="reportage">Reportage — fidélité journalistique</option><option value="nuit">Basse lumière — visibilité</option><option value="portrait">Portrait — rendu naturel</option><option value="nettete">Netteté et artefacts</option></select>
+ <label for="tvplusAIPhotoInstructions">Précisions facultatives</label>
+ <textarea id="tvplusAIPhotoInstructions" maxlength="280" rows="2" placeholder="Ex. : réduire les reflets, préserver les tons de peau."></textarea>
+ <button id="tvplusAIPhotoRun" type="button">Améliorer avec OpenAI</button>
+ <p id="tvplusAIPhotoStatus" role="status" class="enhance-note">Importez une photo. Son envoi à OpenAI nécessite votre clic ; les corrections locales restent disponibles.</p>
+</section>
       <details class="enhance-details" id="enhanceAdvanced"><summary>Réglages manuels · lumière, netteté et bruit</summary><div class="enhance-details-inner">
         <div><label class="enhance-range-label" for="enhanceLight">Lumière <output id="enhanceLightOut">0</output></label><input id="enhanceLight" type="range" min="-35" max="35" value="0"></div>
         <div><label class="enhance-range-label" for="enhanceContrast">Contraste <output id="enhanceContrastOut">8</output></label><input id="enhanceContrast" type="range" min="-30" max="40" value="8"></div>
@@ -1229,6 +1248,35 @@ document.querySelector('.preview-meta').textContent='1:1 · rendu en direct';
  box.addEventListener('pointerdown',e=>{compareDragging=true;box.setPointerCapture(e.pointerId);});
  box.addEventListener('pointermove',e=>{if(!compareDragging)return;const r=box.getBoundingClientRect(),v=Math.round(clamp((e.clientX-r.left)/r.width*100,0,100));$('enhanceCompare').value=v;box.style.setProperty('--split',v+'%');});
  for(const event of ['pointerup','pointercancel','lostpointercapture'])box.addEventListener(event,()=>compareDragging=false);
+ // Adapter d'amélioration IA; état photo conservé dans ce module.
+ window.TVPlusPhotoEnhance={
+   sourceDataURL(){
+     if(!current.source)throw new Error("Importez ou choisissez d'abord une photo.");
+     const img=current.source;
+     const raster=longEdge=>{
+       const scale=Math.min(1,longEdge/Math.max(img.width,img.height));
+       const cv=document.createElement('canvas');
+       cv.width=Math.max(1,Math.round(img.width*scale));cv.height=Math.max(1,Math.round(img.height*scale));
+       cv.getContext('2d').drawImage(img,0,0,cv.width,cv.height);
+       return cv.toDataURL('image/jpeg',.82);
+     };
+     let image=raster(1280);if(image.length>2300000)image=raster(920);
+     if(image.length>2300000)throw new Error("Photo trop volumineuse pour l'envoi.");
+     return image;
+   },
+   async loadFromDataURL(dataURL,label='photo-recadree'){
+     const img=await loadImage(dataURL);
+     loadSourceImage(img,label);
+   },
+   busy(on){setBusy(Boolean(on));},
+   async accept(dataURL){
+     const img=await loadImage(dataURL);
+     const cv=document.createElement('canvas');cv.width=img.width;cv.height=img.height;
+     cv.getContext('2d').drawImage(img,0,0);current.output=cv;current.processedMode='openai';
+     drawCompare();$('enhanceCompare').value='55';box.style.setProperty('--split','55%');
+     status('Résultat OpenAI prêt. Comparez avec l’original et vérifiez les détails avant export.','success');
+   }
+ };
  updateSliderLabels();drawCompare();setBusy(false);
 })();
 
@@ -1239,5 +1287,6 @@ document.querySelector('.preview-meta').textContent='1:1 · rendu en direct';
 <script src="/studio-reportage-titles.js" defer></script>
 <script src="/studio-auto-article.js" defer></script>
 <script src="/studio-openai-editorial.js" defer></script>
+<script src="/studio-ai-everywhere.js" defer></script>
 </body>
 </html>
