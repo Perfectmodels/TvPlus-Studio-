@@ -58,7 +58,8 @@ function validated(raw){
   tone:["journalistique","institutionnel","neutre","dynamique","factuel"].includes(raw.tone)?raw.tone:"journalistique",
   language:["fr","en","es","pt"].includes(raw.language)?raw.language:"fr"};
 }
-function parse(out){
+function parse(out,task){
+ const titleTask=new Set(["titre_affiche","titre_court","reformulation","decryptage","seo","legende","controle_qualite","hashtags"]);
  const parts=[];
  if(typeof out?.output_text==="string")parts.push(out.output_text);
  else for(const entry of out?.output||[])if(entry.type==="message")for(const c of entry.content||[])if(c.type==="output_text")parts.push(c.text);
@@ -66,7 +67,7 @@ function parse(out){
   const x=JSON.parse(parts.join(""));if(typeof x.title!=="string"||typeof x.text!=="string")return null;
   for(const k of ["options","hashtags","issues","notes"])if(!Array.isArray(x[k])||x[k].some(v=>typeof v!=="string"))return null;
   const tidy=(arr,max,len)=>arr.slice(0,max).map(v=>v.slice(0,len));
-  return {title:normalizeHeadline(x.title.slice(0,400)),text:x.text.slice(0,12000),options:tidy(x.options,6,400).map(normalizeHeadline),
+  return {title:titleTask.has(task)?normalizeHeadline(x.title.slice(0,400)):x.title.slice(0,400),text:x.text.slice(0,12000),options:tidy(x.options,6,400).map(v=>titleTask.has(task)?normalizeHeadline(v):v),
    hashtags:tidy(x.hashtags,12,50),issues:tidy(x.issues,12,400),notes:tidy(x.notes,10,400)};
  }catch(_){return null}
 }
@@ -112,6 +113,6 @@ module.exports=async function handler(req,res){
  }
  let json;try{json=await response.json()}catch(_){return send(res,502,{error:"Réponse OpenAI illisible."})}
  if(json.status&&json.status!=="completed")return send(res,502,{error:"Réponse IA incomplète."});
- const output=parse(json);if(!output)return send(res,502,{error:"Réponse structurée inexploitable."});
+ const output=parse(json,input.task);if(!output)return send(res,502,{error:"Réponse structurée inexploitable."});
  return send(res,200,{result:output,task:input.task,model:payload.model});
 };
