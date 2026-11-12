@@ -13,7 +13,7 @@ Le texte est ajusté automatiquement pour ne pas recouvrir le pied de page. Les 
 
 ## Recadrage photo
 
-Outil autonome avec import de photographie, déplacement, zoom, précision au clavier et export PNG **1200 × 600**. Le résultat peut être réutilisé dans une affiche.
+Outil autonome avec import de photographie, déplacement, zoom, précision au clavier et export **JPG 1200 × 600** (qualité 94 %, sans déformation). Le résultat peut être réutilisé dans une affiche.
 
 ## Amélioration photo — v6
 
