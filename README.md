@@ -4,7 +4,7 @@ Interface web responsive pour l'équipe éditoriale TV+ Afrique. Site statique s
 
 ## Affiches
 
-- **Pastille** (1:1) : catégorie, titre et mots-clés jaunes cliquables, tailles réglables.
+- **Pastille** (1:1) : catégorie, titre et mots-clés jaunes cliquables, tailles réglables. **Interligne** personnalisable de 0,85× à 1,65× et **espacement des lettres** de -3 à +10 px, pris en compte dans l'ajustement automatique du titre pour protéger le pied de page. Réglages disponibles dans « Interligne et espacement des lettres » sous la taille générale, conservés dans les brouillons locaux et dans l'export PNG.
 - **Alerte info** (1:1) : bandeau rouge et titre.
 - **Décryptage** (16:9) : photo découpée en diagonale à gauche, analyse à droite.
 - **Verbatim** (1:1) : citation alignée à gauche, portrait assombri, auteur, fonction et filet rouge.
