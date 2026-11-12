@@ -339,7 +339,7 @@ document.addEventListener("input",event=>{
 },true);
 document.addEventListener("click",event=>{
  if(dlg.contains(event.target))return;
- if(event.target.closest(".word-chip,.word-tool,#resetMarkBtn,#resetAll,#clearWordSizes,#resetPhoto,#resetLogo"))scheduleSave(1200);
+ if(event.target.closest(".word-chip,.word-tool,#resetMarkBtn,#resetAll,#clearWordSizes,#pastilleResetSpacing,#resetPhoto,#resetLogo"))scheduleSave(1200);
 },true);
 $("canvasShell")?.addEventListener("pointerup",()=>scheduleSave(450));
 window.addEventListener("pagehide",()=>{if(!restoring&&pending){clearTimeout(pending);persistSnapshot(readSnapshot());}});
