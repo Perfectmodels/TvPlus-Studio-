@@ -1,33 +1,46 @@
 # TV+ Studio — générateur d'affiches TV+ Afrique
 
-Éditeur web responsive pour la communication éditoriale de TV+ Afrique. Site statique sans backend.
+Interface web responsive pour l'équipe éditoriale TV+ Afrique. Site statique sur Vercel, branché sur GitHub.
 
-## Modèles disponibles
+## Affiches
 
-- **Pastille** (carré) : catégorie, titre, mots-clés jaunes sélectionnés directement par clic.
-- **Alerte info** (carré) : bandeau rouge et titre blanc.
-- **Décryptage** (16:9) : photo en diagonale à gauche, panneau bleu nuit avec titre, catégorie et angle d'analyse à droite.
-- **Verbatim** (carré) : citation alignée dans une colonne à gauche sur un portrait assombri, avec auteur, fonction, filet rouge et logo.
+- **Pastille** (1:1) : catégorie, titre et mots-clés jaunes cliquables, tailles réglables.
+- **Alerte info** (1:1) : bandeau rouge et titre.
+- **Décryptage** (16:9) : photo découpée en diagonale à gauche, analyse à droite.
+- **Verbatim** (1:1) : citation alignée à gauche, portrait assombri, auteur, fonction et filet rouge.
 
-## Nouvelle interface harmonisée (V5)
+Le texte est ajusté automatiquement pour ne pas recouvrir le pied de page. Les polices Barlow, Barlow Semi Condensed et Barlow Condensed sont prises en charge. Export PNG disponible.
 
-- **Barre de navigation permanente** : quatre formats visibles d'emblée, avec un outil indépendant de recadrage 1200 × 600.
-- **Sur ordinateur** : éditeur à gauche dans un panneau à défilement limité, aperçu en direct et bouton d'export visibles à droite. La page principale tient dans la hauteur de l'écran sur un poste standard.
-- **Sur mobile** : choix des quatre formats dans une seule ligne, passage rapide entre vues « Éditeur » et « Aperçu », barre fixe de téléchargement.
-- **Réglages** : titre, catégorie, photographie et taille globale accessibles directement ; choix des mots et réglages de police, cadrage et logo regroupés dans des panneaux repliables.
-- **Export** : choix de la résolution placé à côté de l'action PNG sur ordinateur ; une action PNG reste visible en bas sur mobile.
-- **Recadrage** : espace séparé, zoom, position, flèches, export PNG exact 1200 × 600 et réemploi facultatif dans l'affiche.
+## Recadrage photo
 
-## Typographie, photos et sécurité
+Outil autonome avec import de photographie, déplacement, zoom, précision au clavier et export PNG **1200 × 600**. Le résultat peut être réutilisé dans une affiche.
 
-Polices Barlow / Barlow Semi Condensed / Barlow Condensed, graisses Bold / ExtraBold / Black. Le titre s'adapte à la place disponible et préserve le pied de page. Les photos sont chargées dans le navigateur, sans transfert serveur ; les modèles d'exemple ont vocation à être remplacés par les photos originales et le logo TV+ officiel.
+## Amélioration photo — v6
 
-## Développement et publication
+Un nouvel outil indépendant **Amélioration photo** permet :
 
-La plateforme est une application statique autonome dans `index.html` sans compilation. La branche `main` de ce dépôt GitHub est connectée au projet Vercel `tvplus-studio`, qui déploie automatiquement les modifications.
+- Importer un fichier JPG / PNG / WEBP, ou reprendre la photo actuelle d'une affiche.
+- Comparer l'original et le résultat avec un curseur visuel avant/après.
+- Correction automatique de luminosité, contraste, saturation, réduction de bruit *sensible aux contours* et accentuation de netteté. Ces corrections s'exécutent **entièrement dans le navigateur**, sans modèle distant.
+- Ajuster manuellement les cinq paramètres, puis recalculer le rendu.
+- Télécharger le PNG amélioré, l'utiliser dans l'affiche ou l'envoyer au recadrage 1200 × 600.
+- Super-résolution **IA ×2 / ×4** expérimentale basée sur **Real-ESRGAN general x4v3** : exécution ONNX Runtime Web (WASM) sur l'appareil, par blocs. Ce mode est prévu pour les **petites images** ; la limite dépend de l'appareil (par exemple 1024 px pour le grand côté sur ordinateur, 640 px sur mobile). Le mode ×2 réduit le rendu natif ×4 du modèle à ×2.
 
-En local, ouvrir `index.html` dans un navigateur moderne. La police Barlow se charge depuis Google Fonts avec une connexion Internet.
+### Dépendances et confidentialité
 
-## Limitations
+Aucune clé API ni service de traitement d'images n'est nécessaire. Les pixels des photos restent dans le navigateur. **Le mode IA nécessite toutefois le téléchargement initial** de fichiers statiques tiers :
 
-Aucune connexion aux réseaux sociaux, aucun compte utilisateur, aucune sauvegarde partagée et aucune liaison CMS pour le moment.
+- ONNX Runtime Web 1.22.0 (jsDelivr), `https://cdn.jsdelivr.net/npm/onnxruntime-web@1.22.0/dist/`.
+- Modèle Real-ESRGAN general x4v3 distribué par NovareOrbis sous licence BSD-3-Clause, version v3, `https://cdn.jsdelivr.net/gh/NovareOrbis/nova-ai-models@v3/realesr-general-x4v3.onnx`.
+
+Le modèle est mis en cache localement quand le navigateur le permet. Si le réseau, le navigateur ou l'appareil ne permet pas l'IA, l'amélioration standard reste utilisable. Le mode IA n'est **pas garanti sur tous les appareils**. L'IA peut créer des détails artificiels ; un média d'information doit toujours comparer le résultat à l'original.
+
+Le mode rapide n'exige aucune de ces dépendances additionnelles. Par souci de performance, il peut réduire les photographies très volumineuses ; les dimensions de sortie sont affichées avant téléchargement.
+
+## Déploiement
+
+Le site est un fichier `index.html` sans étape de build. Toute modification de `main` déclenche un déploiement Vercel.
+
+## Limites
+
+Il n'y a pas encore de comptes utilisateurs, bibliothèque partagée ni intégration au CMS ou aux réseaux sociaux. Les photographies importées ne sont pas enregistrées côté serveur.
