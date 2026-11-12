@@ -62,7 +62,7 @@ button.addEventListener("click",async event=>{
   const out=chooseTitle(article);
   STATE.current={url:article.url||url,title:article.title,body:article.body,shortUrl:shortened.shortUrl,category:article.category||""};
   try{localStorage.setItem(KEY,JSON.stringify(STATE.current))}catch(_){}
-  set("studioArticleBody",article.body);set("studioCaptionLink",shortened.shortUrl);set("studioCaptionTitle",out.title);
+  set("studioArticleBody",article.body);set("studioCaptionLink",shortened.shortUrl);set("studioCaptionTitle",window.TVPlusHeadlineCase?.(out.title)||out.title);
   $("studioGenerateHashtags")?.click();
   const articleTool=$("studioArticleHeadlineTool");if(articleTool)articleTool.open=true;
   source.textContent="Titre officiel de l’article : "+article.title;
