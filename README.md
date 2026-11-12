@@ -1,38 +1,33 @@
 # TV+ Studio — générateur d'affiches TV+ Afrique
 
-Application web d'édition graphique connectée à GitHub et déployée automatiquement sur Vercel.
+Éditeur web responsive pour la communication éditoriale de TV+ Afrique. Site statique sans backend.
 
-## Modèles
+## Modèles disponibles
 
-- **Pastille** (1:1) : catégorie, titre, mots-clés jaunes en cliquant sur les mots et réglages de taille.
-- **Alerte info** (1:1) : bandeau rouge et titre blanc.
-- **Décryptage** (16:9) : photo à gauche, découpe diagonale, catégorie et textes sur panneau bleu nuit.
-- **Verbatim** (1:1) : grande citation dans une **colonne alignée à gauche**, photo assombrie et portrait visible à droite, nom/fonction et filet rouge.
+- **Pastille** (carré) : catégorie, titre, mots-clés jaunes sélectionnés directement par clic.
+- **Alerte info** (carré) : bandeau rouge et titre blanc.
+- **Décryptage** (16:9) : photo en diagonale à gauche, panneau bleu nuit avec titre, catégorie et angle d'analyse à droite.
+- **Verbatim** (carré) : citation alignée dans une colonne à gauche sur un portrait assombri, avec auteur, fonction, filet rouge et logo.
 
-## Outil distinct de recadrage photo
+## Nouvelle interface harmonisée (V5)
 
-Le bouton **Recadrer une image** ouvre un espace dédié au format paysage **1200 × 600 px (2:1)** sans affecter l'affiche en cours.
+- **Barre de navigation permanente** : quatre formats visibles d'emblée, avec un outil indépendant de recadrage 1200 × 600.
+- **Sur ordinateur** : éditeur à gauche dans un panneau à défilement limité, aperçu en direct et bouton d'export visibles à droite. La page principale tient dans la hauteur de l'écran sur un poste standard.
+- **Sur mobile** : choix des quatre formats dans une seule ligne, passage rapide entre vues « Éditeur » et « Aperçu », barre fixe de téléchargement.
+- **Réglages** : titre, catégorie, photographie et taille globale accessibles directement ; choix des mots et réglages de police, cadrage et logo regroupés dans des panneaux repliables.
+- **Export** : choix de la résolution placé à côté de l'action PNG sur ordinateur ; une action PNG reste visible en bas sur mobile.
+- **Recadrage** : espace séparé, zoom, position, flèches, export PNG exact 1200 × 600 et réemploi facultatif dans l'affiche.
 
-- Import JPG, PNG ou WEBP (30 Mo maximum).
-- Reprendre facultativement la photo actuellement importée dans l'affiche.
-- Cadrage automatique proportionnel, sans étirement.
-- Déplacement au doigt, à la souris, aux touches fléchées ou aux boutons de précision.
-- Zoom de 100 à 300 % et recentrage.
-- Télécharger en PNG de **1200 × 600 px exacts**.
-- Option facultative **Utiliser l'image recadrée dans l'affiche** : action explicite, sans altérer l'image originale.
+## Typographie, photos et sécurité
 
-Les images et les textes restent dans le navigateur. Aucune image n'est envoyée à un serveur lors du recadrage.
+Polices Barlow / Barlow Semi Condensed / Barlow Condensed, graisses Bold / ExtraBold / Black. Le titre s'adapte à la place disponible et préserve le pied de page. Les photos sont chargées dans le navigateur, sans transfert serveur ; les modèles d'exemple ont vocation à être remplacés par les photos originales et le logo TV+ officiel.
 
-## Fonctionnalités générales
+## Développement et publication
 
-Polices **Barlow**, **Barlow Semi Condensed** et **Barlow Condensed**, graisses 700/800/900 ; ajustement automatique des titres pour ne pas empiéter sur le pied de page ; export PNG en résolutions carrées ou 16:9 ; repositionnement des photographies et remplacement du logo.
+La plateforme est une application statique autonome dans `index.html` sans compilation. La branche `main` de ce dépôt GitHub est connectée au projet Vercel `tvplus-studio`, qui déploie automatiquement les modifications.
 
-## Déploiement
+En local, ouvrir `index.html` dans un navigateur moderne. La police Barlow se charge depuis Google Fonts avec une connexion Internet.
 
-Site statique contenu dans `index.html`, sans étape de compilation. Vercel est connecté à la branche GitHub `main` et déploie les modifications automatiquement.
+## Limitations
 
-Pour ouvrir le site localement, ouvrir `index.html` dans un navigateur récent. Les polices Barlow sont chargées depuis Google Fonts lorsque l'accès Internet est disponible.
-
-## Limites
-
-Pas encore de comptes utilisateurs, d'archives partagées ou de liaison directe avec le CMS TV+.
+Aucune connexion aux réseaux sociaux, aucun compte utilisateur, aucune sauvegarde partagée et aucune liaison CMS pour le moment.
