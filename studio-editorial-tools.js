@@ -1,0 +1,359 @@
+(function tvplusEditorialTools() {
+"use strict";
+const $ = id => document.getElementById(id);
+const modes = ["pastille","alerte","decryptage","verbatim"];
+const labels = {pastille:"Pastille",alerte:"Alerte info",decryptage:"Décryptage",verbatim:"Verbatim"};
+const DB_NAME="tvplus-editorial-local-v1", STORE="posters", LAST="tvplus:last-edit-mode";
+const stateKey="tvplus:caption-settings-v1";
+let dbPromise=null, restoring=true, pending=null, queue=Promise.resolve();
+const bank=new Map(), cache=new WeakMap();
+const savedImageURLs=[];
+let currentTab="caption";
+function openDB(){
+ if(!("indexedDB" in window)) return Promise.reject(new Error("Stockage local indisponible"));
+ if(!dbPromise) dbPromise=new Promise((resolve,reject)=>{
+  const r=indexedDB.open(DB_NAME,1);
+  r.onupgradeneeded=()=>{if(!r.result.objectStoreNames.contains(STORE))r.result.createObjectStore(STORE,{keyPath:"mode"});};
+  r.onsuccess=()=>resolve(r.result); r.onerror=()=>reject(r.error||new Error("IndexedDB"));
+ });
+ return dbPromise;
+}
+async function allDrafts(){
+ const db=await openDB();
+ return new Promise((resolve,reject)=>{const t=db.transaction(STORE,"readonly"),r=t.objectStore(STORE).getAll();r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);});
+}
+async function putDraft(row){
+ const db=await openDB();
+ return new Promise((resolve,reject)=>{const t=db.transaction(STORE,"readwrite");t.objectStore(STORE).put(row);t.oncomplete=resolve;t.onerror=()=>reject(t.error);});
+}
+async function deleteDraft(mode){
+ const db=await openDB();
+ return new Promise((resolve,reject)=>{const t=db.transaction(STORE,"readwrite");t.objectStore(STORE).delete(mode);t.oncomplete=resolve;t.onerror=()=>reject(t.error);});
+}
+function status(text,kind=""){const x=$("studioSaveStatus");if(x){x.textContent=text;x.dataset.kind=kind;}}
+function readSnapshot(){
+ return {
+  mode:state.mode,headline:state.headline,category:state.category,
+  details:$("details")?.value||"",speaker:$("speaker")?.value||"",role:$("role")?.value||"",
+  highlighted:[...state.highlightedIndices],sizes:[...state.wordSizes],
+  fontScale:state.fontScale,fontFamily:state.fontFamily,fontWeight:state.fontWeight,
+  darkness:state.darkness,website:state.website,zoom:state.zoom,dx:state.dx,dy:state.dy,
+  sample:state.sample,photoRef:!state.sample?state.image:null,
+  logoRef:state.logo&&state.logo.src!==DEFAULT_LOGO?state.logo:null,
+  updatedAt:Date.now()
+ };
+}
+async function blobFromImage(img){
+ if(!img||!img.src) return null;
+ if(cache.has(img))return cache.get(img);
+ const job=(async()=>{
+  if(img.src.startsWith("data:image/")){
+   const b=await (await fetch(img.src)).blob();
+   if(b.size<=18*1024*1024)return b;
+  }
+  // Keep a quality-preserving local copy when an imported image exceeds storage limits.
+  const w=img.naturalWidth||img.width,h=img.naturalHeight||img.height;
+  if(!w||!h)return null;
+  const scale=Math.min(1,2000/Math.max(w,h)),c=document.createElement("canvas");
+  c.width=Math.max(1,Math.round(w*scale));c.height=Math.max(1,Math.round(h*scale));
+  c.getContext("2d").drawImage(img,0,0,c.width,c.height);
+  return await new Promise(resolve=>c.toBlob(resolve,"image/jpeg",.91));
+ })().catch(()=>null);
+ cache.set(img,job);return job;
+}
+function persistSnapshot(s){
+ if(!s||restoring||!modes.includes(s.mode))return;
+ const mode=s.mode;
+ status("Enregistrement…");
+ queue=queue.catch(()=>{}).then(async()=>{
+  const photoBlob=await blobFromImage(s.photoRef),logoBlob=await blobFromImage(s.logoRef);
+  const row={...s,photoBlob,logoBlob};
+  delete row.photoRef;delete row.logoRef;
+  await putDraft(row);bank.set(mode,row);
+  try{localStorage.setItem(LAST,mode);}catch(_){}
+  status("Brouillon enregistré sur cet appareil","ok");updateLibrary();
+ }).catch(err=>{status("Sauvegarde indisponible : espace local insuffisant ou privé","warn");console.warn("Local draft storage:",err);});
+}
+function scheduleSave(delay=700){
+ if(restoring)return;
+ clearTimeout(pending);pending=setTimeout(()=>{pending=null;persistSnapshot(readSnapshot());},delay);
+}
+function flushSave(){
+ if(restoring)return;
+ clearTimeout(pending);pending=null;persistSnapshot(readSnapshot());
+}
+async function decodeBlob(blob){
+ if(!blob)return null;
+ const url=URL.createObjectURL(blob);savedImageURLs.push(url);
+ try{return await loadImage(url);}catch(_){return null;}
+}
+async function applySaved(mode){
+ const row=bank.get(mode);if(!row||state.mode!==mode)return false;
+ restoring=true;
+ try{
+  const photo=await decodeBlob(row.photoBlob);
+  const logo=await decodeBlob(row.logoBlob);
+  if(state.mode!==mode)return false;
+  state.headline=row.headline||"";
+  state.category=row.category||"";
+  state.highlightedIndices=new Set(row.highlighted||[]);
+  state.wordSizes=new Map(row.sizes||[]);
+  state.sizeSelection.clear();
+  state.fontScale=Number(row.fontScale)||100;state.fontFamily=row.fontFamily||"Barlow";
+  state.fontWeight=Number(row.fontWeight)||900;state.darkness=Number(row.darkness??70);
+  state.website=row.website||"tvplusafrique.com";
+  state.zoom=Number(row.zoom)||100;state.dx=Number(row.dx)||0;state.dy=Number(row.dy)||0;
+  if(photo){state.image=photo;state.sample=false;}
+  if(logo)state.logo=logo;
+  const edits={headline:row.headline||"",category:row.category||"",details:row.details||"",
+   speaker:row.speaker||"",role:row.role||"",fontScale:state.fontScale,fontFamily:state.fontFamily,
+   fontWeight:state.fontWeight,zoom:state.zoom,darkness:state.darkness,webText:state.website};
+  for(const [id,value] of Object.entries(edits)){const el=$(id);if(el)el.value=value;}
+  const values={fontScaleLabel:state.fontScale+" %",zoomLabel:state.zoom+" %",darknessLabel:state.darkness+" %",photoName:photo?"Photo retrouvée dans le brouillon":"Photo du modèle"};
+  for(const [id,value] of Object.entries(values))if($(id))$(id).textContent=value;
+  renderTokens();draw();status("Brouillon retrouvé · "+labels[mode],"ok");return true;
+ }finally{restoring=false;}
+}
+function qualityIssues(){
+ const list=[];
+ if(!state.headline.trim())list.push("Le titre ou la citation est vide.");
+ if(!state.image)list.push("Aucune photo n'est chargée.");
+ else if(state.sample)list.push("La photo affichée est un exemple : remplacez-la avant publication.");
+ if($("fitStatus")?.classList.contains("warning"))list.push("Le texte a été fortement réduit pour tenir dans l'affiche.");
+ const w=Number($("exportSize")?.value||1200),h=state.mode==="decryptage"?Math.round(w*9/16):w;
+ if(state.image&&!state.sample&&Math.min(state.image.naturalWidth||w,state.image.naturalHeight||h)<Math.min(w,h)*.55)
+  list.push("La photo source est petite pour la résolution d'export choisie.");
+ if(state.mode==="decryptage"&&!($("details")?.value||"").trim())list.push("L'angle ou la question du décryptage est vide.");
+ if(state.mode==="verbatim"&&!($("speaker")?.value||"").trim())list.push("Le nom de l'auteur manque au Verbatim.");
+ return list;
+}
+const dlg=document.createElement("dialog");dlg.id="studioEditorialDialog";dlg.className="studio-editorial-dialog";
+dlg.setAttribute("aria-labelledby","studioEditorialTitle");
+dlg.innerHTML=`
+ <div class="studio-editorial-head">
+  <div><span class="studio-editorial-overline">TV+ STUDIO · OUTILS</span><h2 id="studioEditorialTitle">Rédaction & production</h2><p>Des outils complémentaires sans modifier votre espace de création.</p></div>
+  <button id="studioCloseTools" type="button" aria-label="Fermer les outils">×</button>
+ </div>
+ <div class="studio-editorial-tabs" role="tablist" aria-label="Outils de production">
+  <button type="button" data-tooltab="caption" class="active" aria-selected="true">Légende Facebook</button>
+  <button type="button" data-tooltab="drafts" aria-selected="false">Brouillons</button>
+  <button type="button" data-tooltab="quality" aria-selected="false">Qualité & formats</button>
+ </div>
+ <div class="studio-editorial-main">
+ <section data-toolpanel="caption" class="studio-tool-panel">
+  <p class="studio-note">Modèle provisoire sans IA. Lorsque vous transmettrez la légende officielle, nous pourrons reproduire exactement la charte TV+.</p>
+  <div class="studio-form-grid">
+   <label>Catégorie <input id="studioCaptionCategory" placeholder="Ex. Économie" maxlength="60"></label>
+   <label>Lien de l'article <input id="studioCaptionLink" type="url" placeholder="https://l.tvplusafrique.com/..." inputmode="url"></label>
+  </div>
+  <label>Introduction facultative <textarea id="studioCaptionIntro" rows="2" placeholder="Une ou deux phrases factuelles pour accompagner le titre."></textarea></label>
+  <div class="studio-form-grid">
+   <label>Appel à l'action <input id="studioCaptionCTA" value="Lire l’article :" maxlength="100"></label>
+   <label>Hashtags <input id="studioCaptionHashtags" value="#TVPlusAfrique" maxlength="180"></label>
+  </div>
+  <div class="studio-tool-subtitle">Légende générée depuis le titre de l’affiche</div>
+  <textarea id="studioCaptionPreview" rows="8" aria-label="Légende prête à copier"></textarea>
+  <div class="studio-editorial-actions"><button id="studioCaptionRefresh" type="button">Régénérer depuis le titre</button><button id="studioCaptionCopy" class="studio-accent" type="button">Copier la légende</button></div>
+  <p id="studioCaptionStatus" class="studio-note" role="status"></p>
+ </section>
+ <section data-toolpanel="drafts" class="studio-tool-panel" hidden>
+  <p class="studio-note">Les créations sont enregistrées dans ce navigateur, sur cet appareil uniquement. Elles ne sont pas partagées entre les journalistes.</p>
+  <div class="studio-editorial-actions"><button id="studioSaveNow" class="studio-accent" type="button">Enregistrer maintenant</button><span id="studioSaveStatus" role="status" class="studio-note">Initialisation…</span></div>
+  <div id="studioDraftList" class="studio-draft-list"></div>
+  <p class="studio-note">Photos importées : conservées localement lorsque le navigateur le permet. Pour une grosse photo, une copie peut être redimensionnée.</p>
+ </section>
+ <section data-toolpanel="quality" class="studio-tool-panel" hidden>
+  <div class="studio-tool-subtitle">Contrôle avant publication</div>
+  <button id="studioRunCheck" type="button" class="studio-accent">Vérifier l’affiche</button>
+  <div id="studioCheckResults" class="studio-check-results" role="status">Cliquez pour contrôler le titre, l'image et les dimensions.</div>
+  <div class="studio-tool-subtitle">Exporter une image optimisée</div>
+  <p class="studio-note">La version PNG reste accessible normalement depuis le bouton de téléchargement de l'éditeur.</p>
+  <div class="studio-form-grid">
+   <label>Format <select id="studioFormat"><option value="image/webp">WebP · léger</option><option value="image/jpeg">JPEG · compatible</option></select></label>
+   <label>Qualité <select id="studioQuality"><option value=".75">75 %</option><option value=".85" selected>85 % · recommandé</option><option value=".92">92 %</option></select></label>
+  </div>
+  <div class="studio-editorial-actions"><button id="studioOptimizedExport" class="studio-accent" type="button">Télécharger le fichier optimisé</button></div>
+  <p class="studio-note" id="studioOptimizedStatus" role="status"></p>
+ </section>
+ </div>
+ <div class="studio-editorial-foot"><span>Aucune API · Pas de publication automatique</span><button type="button" id="studioCloseFooter">Fermer</button></div>
+`;
+document.body.append(dlg);
+const style=document.createElement("style");
+style.id="studio-editorial-style";
+style.textContent=`
+#studioEditorialOpen{min-height:35px;border:1px solid #536781;background:#132744;color:#fff;border-radius:9px;padding:6px 13px;font:700 13px Barlow,Arial,sans-serif;cursor:pointer;white-space:nowrap}
+#studioEditorialOpen:hover{border-color:#ffbf1c}
+.studio-editorial-dialog{position:fixed;inset:0;margin:auto;border:1px solid #384a65;border-radius:16px;padding:0;width:min(850px,95vw);max-height:min(810px,94dvh);background:#101a2b;color:#f1f5ff;box-shadow:0 25px 100px #000b;font:14px Barlow,Arial,sans-serif;overflow:hidden}
+.studio-editorial-dialog::backdrop{background:#000b;backdrop-filter:blur(3px)}
+.studio-editorial-dialog:not([open]){display:none!important}
+.studio-editorial-dialog[open]{display:flex;flex-direction:column}
+.studio-editorial-head{display:flex;align-items:start;justify-content:space-between;gap:14px;padding:18px 21px 13px;border-bottom:1px solid #2a3c55}
+.studio-editorial-overline{font-size:10px;color:#ffc126;letter-spacing:1.5px;font-weight:900}
+.studio-editorial-head h2{font-size:21px;margin:4px 0;font-weight:800;color:white}
+.studio-editorial-head p,.studio-note{font-size:12px;color:#aebed1;line-height:1.45;margin:5px 0 10px}
+#studioCloseTools{background:transparent;border:1px solid #41516a;color:white;font-size:25px;border-radius:9px;min-width:38px;min-height:36px;cursor:pointer}
+.studio-editorial-tabs{display:flex;gap:6px;padding:10px 17px;border-bottom:1px solid #2a3c55;overflow-x:auto;flex-shrink:0}
+.studio-editorial-tabs button{border:1px solid #3e516a;border-radius:8px;background:#192842;color:#d0d9e7;padding:9px 13px;font-weight:750;white-space:nowrap;cursor:pointer}
+.studio-editorial-tabs button.active{background:#ffc21b;border-color:#ffc21b;color:#101725}
+.studio-editorial-main{padding:17px 21px;overflow:auto;min-height:100px;flex:1;scrollbar-width:thin}
+.studio-tool-panel[hidden]{display:none!important}
+.studio-tool-panel label{display:block;font-size:12px;font-weight:750;color:#d3e0f1;margin-bottom:12px}
+.studio-tool-panel input,.studio-tool-panel select,.studio-tool-panel textarea{width:100%;border:1px solid #354a66;border-radius:8px;background:#0a1425;color:white;padding:10px;margin-top:5px;min-height:39px;font:inherit}
+.studio-tool-panel textarea{resize:vertical;line-height:1.5}
+#studioCaptionPreview{min-height:145px}
+.studio-form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.studio-tool-subtitle{font-size:13px;font-weight:850;color:white;margin:12px 0 7px}
+.studio-editorial-actions{display:flex;align-items:center;justify-content:flex-start;flex-wrap:wrap;gap:10px;margin:11px 0}
+.studio-editorial-actions button,#studioRunCheck{min-height:39px;padding:9px 14px;border:1px solid #42556b;background:#20304b;color:white;border-radius:9px;font-weight:800;cursor:pointer}
+.studio-editorial-actions button.studio-accent,#studioRunCheck.studio-accent{background:#ffc21b;border-color:#ffc21b;color:#101725}
+.studio-editorial-foot{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:12px 21px;border-top:1px solid #2a3c55;color:#869bb5;font-size:11px}
+.studio-editorial-foot button{background:transparent;border:1px solid #42556b;color:white;border-radius:7px;padding:6px 13px;cursor:pointer}
+.studio-draft-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:15px}
+.studio-draft{border:1px solid #30455e;border-radius:10px;background:#16253a;padding:13px;min-width:0}
+.studio-draft strong{display:block;font-size:15px;margin-bottom:3px}
+.studio-draft p{font-size:12px;color:#becadd;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin:5px 0}
+.studio-draft small{color:#94acc6}
+.studio-draft-actions{display:flex;gap:8px;margin-top:12px}
+.studio-draft-actions button{border-radius:7px;background:#283b55;color:white;border:1px solid #526681;padding:7px 10px;cursor:pointer}
+.studio-check-results{border:1px solid #364b65;background:#172741;border-radius:9px;padding:13px;margin:12px 0;line-height:1.7;color:#dce7f6}
+.studio-check-results ul{margin:0;padding-left:20px}
+#studioSaveStatus[data-kind=warn]{color:#ffca84}
+@media(max-width:620px){
+ #studioEditorialOpen{padding:6px 9px;font-size:12px;min-height:33px}
+ .studio-editorial-dialog{width:100vw;max-width:none;height:100dvh;max-height:100dvh;border-radius:0}
+ .studio-editorial-head{padding:12px 15px 9px}.studio-editorial-head h2{font-size:18px}
+ .studio-editorial-head p{display:none}
+ .studio-editorial-tabs{padding:8px 10px}
+ .studio-editorial-tabs button{padding:8px 10px;font-size:12px}
+ .studio-editorial-main{padding:12px 14px}
+ .studio-form-grid{grid-template-columns:1fr;gap:0}
+ .studio-editorial-foot{padding:9px 14px}
+ .studio-draft-list{grid-template-columns:1fr}
+}
+`;
+document.head.append(style);
+const openBtn=document.createElement("button");openBtn.id="studioEditorialOpen";openBtn.type="button";
+openBtn.innerHTML='<span class="studio-editorial-long">Rédaction & brouillons</span><span class="studio-editorial-short" hidden>Outils</span>';
+document.querySelector(".header-right")?.append(openBtn);
+const responsive=document.createElement("style");responsive.textContent="@media(max-width:700px){#studioEditorialOpen .studio-editorial-long{display:none}#studioEditorialOpen .studio-editorial-short{display:inline!important}}";document.head.append(responsive);
+function tab(key){
+ currentTab=key;
+ dlg.querySelectorAll("[data-tooltab]").forEach(b=>{const active=b.dataset.tooltab===key;b.classList.toggle("active",active);b.setAttribute("aria-selected",String(active));});
+ dlg.querySelectorAll("[data-toolpanel]").forEach(p=>p.hidden=p.dataset.toolpanel!==key);
+ if(key==="drafts")updateLibrary();
+ if(key==="caption")generateCaption();
+ if(key==="quality")check();
+}
+function show(key="caption"){tab(key);dlg.showModal();}
+openBtn.addEventListener("click",()=>show("caption"));
+$("studioCloseTools").addEventListener("click",()=>dlg.close());
+$("studioCloseFooter").addEventListener("click",()=>dlg.close());
+dlg.querySelectorAll("[data-tooltab]").forEach(b=>b.addEventListener("click",()=>tab(b.dataset.tooltab)));
+const fields=["studioCaptionCategory","studioCaptionLink","studioCaptionIntro","studioCaptionCTA","studioCaptionHashtags"];
+function saveCaptionSettings(){
+ const v={};for(const id of fields)v[id]=$(id).value;
+ try{localStorage.setItem(stateKey,JSON.stringify(v));}catch(_){}
+}
+function loadCaptionSettings(){
+ try{const v=JSON.parse(localStorage.getItem(stateKey)||"{}");for(const id of fields)if(typeof v[id]==="string")$(id).value=v[id];}catch(_){}
+}
+let lastAutoCategory="";
+function generateCaption(){
+ let auto=state.mode==="pastille"||state.mode==="decryptage"?(state.category||labels[state.mode]):labels[state.mode];
+ if(!$("studioCaptionCategory").value||$("studioCaptionCategory").value===lastAutoCategory)$("studioCaptionCategory").value=auto;
+ lastAutoCategory=auto;
+ const cat=$("studioCaptionCategory").value.trim().toUpperCase(),intro=$("studioCaptionIntro").value.trim(),
+  url=$("studioCaptionLink").value.trim(),cta=$("studioCaptionCTA").value.trim(),hashtags=$("studioCaptionHashtags").value.trim();
+ const lines=["TV+ | "+(cat||"ACTUALITÉ"),"",state.headline.trim()||"[Titre à renseigner]"];
+ if(intro)lines.push("",intro);
+ if(url)lines.push("",(cta||"Lire l'article :")+" "+url);
+ if(hashtags)lines.push("",hashtags);
+ $("studioCaptionPreview").value=lines.join("\n");
+}
+loadCaptionSettings();
+fields.forEach(id=>$(id).addEventListener("input",()=>{saveCaptionSettings();generateCaption();}));
+$("studioCaptionRefresh").addEventListener("click",generateCaption);
+$("studioCaptionCopy").addEventListener("click",async()=>{
+ const text=$("studioCaptionPreview").value;
+ try{
+  if(navigator.clipboard&&window.isSecureContext)await navigator.clipboard.writeText(text);
+  else{$("studioCaptionPreview").select();if(!document.execCommand("copy"))throw Error("Copie non disponible");}
+  $("studioCaptionStatus").textContent="Légende copiée. Vérifiez les informations avant publication sur Facebook.";
+ }catch(_){$("studioCaptionStatus").textContent="Copie automatique impossible : sélectionnez le texte ci-dessus.";$("studioCaptionPreview").focus();$("studioCaptionPreview").select();}
+});
+function updateLibrary(){
+ const list=$("studioDraftList");if(!list)return;list.replaceChildren();
+ for(const mode of modes){
+  const item=bank.get(mode),card=document.createElement("article");card.className="studio-draft";
+  const strong=document.createElement("strong");strong.textContent=labels[mode];card.append(strong);
+  const p=document.createElement("p");p.textContent=item?.headline||"Aucun brouillon enregistré";card.append(p);
+  if(item){const d=document.createElement("small");d.textContent="Sauvegardé "+new Date(item.updatedAt).toLocaleString("fr-FR");card.append(d);}
+  const buttons=document.createElement("div");buttons.className="studio-draft-actions";
+  if(item){
+   const load=document.createElement("button");load.type="button";load.textContent="Reprendre";
+   load.addEventListener("click",async()=>{flushSave();restoring=true;try{if(state.mode!==mode)$(mode+"Btn").click();await applySaved(mode);dlg.close();}finally{restoring=false;}});
+   const del=document.createElement("button");del.type="button";del.textContent="Supprimer";del.setAttribute("aria-label","Supprimer le brouillon "+labels[mode]);
+   del.addEventListener("click",async()=>{if(!confirm("Supprimer le brouillon local « "+labels[mode]+" » ?"))return;try{await deleteDraft(mode);bank.delete(mode);updateLibrary();status("Brouillon supprimé","ok");}catch(_){status("Suppression impossible","warn");}});
+   buttons.append(load,del);
+  }
+  card.append(buttons);list.append(card);
+ }
+}
+$("studioSaveNow").addEventListener("click",()=>{if(restoring)return;flushSave();});
+$("studioRunCheck").addEventListener("click",check);
+function check(){
+ const issues=qualityIssues(),root=$("studioCheckResults");root.replaceChildren();
+ if(!issues.length){root.textContent="✓ Aucun problème évident détecté. Relisez néanmoins les informations avant publication.";return;}
+ const p=document.createElement("strong");p.textContent=issues.length+" point(s) à vérifier avant la publication :";root.append(p);
+ const ul=document.createElement("ul");for(const t of issues){const li=document.createElement("li");li.textContent=t;ul.append(li);}root.append(ul);
+}
+$("studioOptimizedExport").addEventListener("click",async()=>{
+ const target=$("studioOptimizedStatus");target.textContent="Préparation du fichier…";
+ try{
+  await document.fonts.ready;draw();
+  const w=Number($("exportSize")?.value||1200),h=state.mode==="decryptage"?Math.round(w*9/16):w;
+  const c=document.createElement("canvas");c.width=w;c.height=h;
+  const g=c.getContext("2d");if(!g)throw Error("Canvas non pris en charge");
+  g.imageSmoothingEnabled=true;g.imageSmoothingQuality="high";g.drawImage($("poster"),0,0,w,h);
+  const mime=$("studioFormat").value,quality=Number($("studioQuality").value);
+  const blob=await new Promise((resolve,reject)=>c.toBlob(x=>x?resolve(x):reject(Error("Export impossible")),mime,quality));
+  const ext=blob.type==="image/png"?"png":blob.type==="image/jpeg"?"jpg":"webp";
+  const url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;
+  a.download="tvplus-"+state.mode+"-"+new Date().toISOString().slice(0,10)+"-optimise."+ext;
+  document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),20000);
+  target.textContent=`Téléchargement prêt : ${w} × ${h} · ${(blob.size/1024).toFixed(0)} Ko · ${ext.toUpperCase()}`;
+ }catch(err){target.textContent="Export impossible : "+(err?.message||String(err));}
+});
+const switcher=document.querySelector(".mode-switch");
+switcher?.addEventListener("click",event=>{
+ const btn=event.target.closest(".mode-btn");if(!btn||restoring)return;
+ const mode=btn.id.replace(/Btn$/,"");
+ if(mode===state.mode||!modes.includes(mode))return;
+ flushSave();
+ setTimeout(()=>{if(state.mode===mode&&bank.has(mode))applySaved(mode);},60);
+},true);
+document.addEventListener("input",event=>{
+ if(dlg.contains(event.target))return;
+ if(event.target.matches("input,textarea,select")&&event.target.closest(".panel"))scheduleSave(650);
+},true);
+document.addEventListener("click",event=>{
+ if(dlg.contains(event.target))return;
+ if(event.target.closest(".word-chip,.word-tool,#resetMarkBtn,#resetAll,#clearWordSizes,#resetPhoto,#resetLogo"))scheduleSave(1200);
+},true);
+$("canvasShell")?.addEventListener("pointerup",()=>scheduleSave(450));
+window.addEventListener("pagehide",()=>{if(!restoring&&pending){clearTimeout(pending);persistSnapshot(readSnapshot());}});
+(async()=>{
+ try{
+  await (document.readyState==="complete"?Promise.resolve():new Promise(resolve=>window.addEventListener("load",resolve,{once:true})));
+  const rows=await allDrafts();for(const r of rows)bank.set(r.mode,r);
+  const previous=(()=>{try{return localStorage.getItem(LAST);}catch(_){return null;}})();
+  if(previous&&bank.has(previous)){
+   if(state.mode!==previous)$(previous+"Btn").click();
+   await applySaved(previous);
+  }
+  status("Brouillons locaux prêts","ok");updateLibrary();
+ }catch(err){status("Sauvegarde locale indisponible","warn");console.warn("TV+ draft initialization:",err);}
+ finally{restoring=false;}
+})();
+})();
