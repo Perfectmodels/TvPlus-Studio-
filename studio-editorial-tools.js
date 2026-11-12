@@ -429,7 +429,7 @@ function titleKeywords(title,category){
 }
 let suggestedHashtags=[],chosenHashtags=new Set(),hashtagSignature="";
 function syncHashtagSuggestions(force=false){
- const relevantTitle=state.mode==="pastille"&&state.articleFullTitle?.trim()?state.articleFullTitle:state.headline;
+ const relevantTitle=state.mode==="pastille"&&$("studioCaptionType").value==="lire"&&state.articleFullTitle?.trim()?state.articleFullTitle:state.headline;
  const signature=String(relevantTitle||"")+"|"+String(state.category||"");
  if(!force&&hashtagSignature===signature)return;
  hashtagSignature=signature;
@@ -469,7 +469,7 @@ function suggestedType(){
 }
 function generateCaption(){
  const type=$("studioCaptionType").value||"lire";
- const full=state.mode==="pastille"&&state.articleFullTitle?.trim()?state.articleFullTitle:state.headline;
+ const full=type==="lire"&&state.mode==="pastille"&&state.articleFullTitle?.trim()?state.articleFullTitle:state.headline;
  const title=(full||"").trim()||"[Titre de l’actualité à compléter]";
  const link=$("studioCaptionLink").value.trim();
  const intro=$("studioCaptionIntro").value.trim();
