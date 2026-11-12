@@ -36,7 +36,7 @@ function readSnapshot(){
   mode:state.mode,headline:state.headline,category:state.category,
   details:$("details")?.value||"",speaker:$("speaker")?.value||"",role:$("role")?.value||"",
   highlighted:[...state.highlightedIndices],sizes:[...state.wordSizes],
-  fontScale:state.fontScale,lineHeight:state.lineHeight,letterSpacing:state.letterSpacing,fontFamily:state.fontFamily,fontWeight:state.fontWeight,
+  fontScale:state.fontScale,lineHeight:state.lineHeight,letterSpacing:state.letterSpacing,widthPercent:state.widthPercent,fontFamily:state.fontFamily,fontWeight:state.fontWeight,
   darkness:state.darkness,website:state.website,zoom:state.zoom,dx:state.dx,dy:state.dy,
   sample:state.sample,photoRef:!state.sample?state.image:null,
   logoRef:state.logo&&state.logo.src!==DEFAULT_LOGO?state.logo:null,
@@ -99,19 +99,19 @@ async function applySaved(mode){
   state.highlightedIndices=new Set(row.highlighted||[]);
   state.wordSizes=new Map(row.sizes||[]);
   state.sizeSelection.clear();
-  state.fontScale=Number(row.fontScale)||100;state.lineHeight=Math.max(.85,Math.min(1.65,Number(row.lineHeight)||1.16));state.letterSpacing=Math.max(-3,Math.min(10,Number(row.letterSpacing)||0));state.fontFamily=row.fontFamily||"Barlow";
+  state.fontScale=Number(row.fontScale)||100;state.lineHeight=Math.max(.85,Math.min(1.65,Number(row.lineHeight)||1.16));state.letterSpacing=Math.max(-3,Math.min(10,Number(row.letterSpacing)||0));state.widthPercent=Math.max(85,Math.min(115,Number(row.widthPercent)||100));state.fontFamily=row.fontFamily||"Barlow";
   state.fontWeight=Number(row.fontWeight)||900;state.darkness=Number(row.darkness??70);
   state.website=row.website||"tvplusafrique.com";
   state.zoom=Number(row.zoom)||100;state.dx=Number(row.dx)||0;state.dy=Number(row.dy)||0;
   if(photo){state.image=photo;state.sample=false;}
   if(logo)state.logo=logo;
   const edits={headline:row.headline||"",category:row.category||"",details:row.details||"",
-   speaker:row.speaker||"",role:row.role||"",fontScale:state.fontScale,pastilleLineHeight:state.lineHeight,pastilleLetterSpacing:state.letterSpacing,fontFamily:state.fontFamily,
+   speaker:row.speaker||"",role:row.role||"",fontScale:state.fontScale,pastilleLineHeight:state.lineHeight,pastilleLetterSpacing:state.letterSpacing,pastilleWidthPercent:state.widthPercent,fontFamily:state.fontFamily,
    fontWeight:state.fontWeight,zoom:state.zoom,darkness:state.darkness,webText:state.website};
   for(const [id,value] of Object.entries(edits)){const el=$(id);if(el)el.value=value;}
   // Preserve the selected official TV+ rubric, including old saved spelling/values.
   if(typeof setCategoryValue==="function")setCategoryValue(row.category||"");
-  const values={fontScaleLabel:state.fontScale+" %",pastilleLineHeightLabel:state.lineHeight.toFixed(2).replace('.',',')+"×",pastilleLetterSpacingLabel:(state.letterSpacing>0?'+':'')+String(state.letterSpacing).replace('.',',')+" px",zoomLabel:state.zoom+" %",darknessLabel:state.darkness+" %",photoName:photo?"Photo retrouvée dans le brouillon":"Photo du modèle"};
+  const values={fontScaleLabel:state.fontScale+" %",pastilleLineHeightLabel:state.lineHeight.toFixed(2).replace('.',',')+"×",pastilleLetterSpacingLabel:(state.letterSpacing>0?'+':'')+String(state.letterSpacing).replace('.',',')+" px",pastilleWidthPercentLabel:state.widthPercent===100?"100 % · naturelle":state.widthPercent+" %",zoomLabel:state.zoom+" %",darknessLabel:state.darkness+" %",photoName:photo?"Photo retrouvée dans le brouillon":"Photo du modèle"};
   for(const [id,value] of Object.entries(values))if($(id))$(id).textContent=value;
   renderTokens();draw();status("Brouillon retrouvé · "+labels[mode],"ok");return true;
  }finally{restoring=false;}
