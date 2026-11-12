@@ -30,11 +30,14 @@
   let s=String(source||"").replace(/\s+/g," ").trim().replace(/^[«“"' ]+|[»”"' ]+$/g,"");
   s=s.replace(/\bfrancs\s+CFA\b/gi,"FCFA").replace(/^[\-–—•\s]+/,"");
   s=s.replace(/[.!?]+\s*$/,"");
+  // Drop generic introductions when the rest is an independent factual sentence.
+  s=s.replace(/^(?:au cours d['’]une intervention|lors d['’]une conférence|dans un communiqué|selon un communiqué|à l['’]occasion d['’]une cérémonie),\s*/i,"");
+
   const sourceText=s;
   function within(t){return [...t].length<=limit&&t.split(/\s+/).length<=wordLimit;}
   if(within(s))return {title:s,cut:false};
   // Prefer natural clause boundaries, not arbitrary character truncation.
-  for(const separator of [/[,;]\s+/,/\s+[—–]\s+/,/\s+(?:tandis que|alors que|dans le cadre de|lors d['’]|au cours de)\s+/i]){
+  for(const separator of [/;\s+/,/[,;]\s+(?:mais|alors que|tandis que|cependant)\s+/i,/\s+[—–]\s+/,/\s+(?:tandis que|alors que|dans le cadre de|lors d['’]|au cours de)\s+/i]){
    const sections=s.split(separator);
    if(sections.length>1&&sections[0].length>=30&&within(sections[0]))return {title:sections[0].trim(),cut:false};
   }
@@ -82,7 +85,7 @@
   extracted.forEach((text,index)=>ordered.push({text,from:"article · passage "+(index+1),index,source:"article"}));
   const scored=ordered.map(item=>{
     const short=cutToLimit(item.text,limit,maxWords);
-    const score=relevance(item.text,item.index,item.source) + (item.source==="headline"?6:0) - (short.cut?15:0)
+    const score=relevance(item.text,item.index,item.source) + (item.source==="headline"?6:0) - (short.cut?42:0)
       -(short.title.length<26?15:0);
     return {...item,...short,score};
   }).filter(x=>x.title.length>=18&&x.score>-100).sort((a,b)=>b.score-a.score);
