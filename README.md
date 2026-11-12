@@ -11,6 +11,15 @@ Interface web responsive pour l'équipe éditoriale TV+ Afrique. Site statique s
 
 Le texte est ajusté automatiquement pour ne pas recouvrir le pied de page. Les polices Barlow, Barlow Semi Condensed et Barlow Condensed sont prises en charge. Export PNG disponible.
 
+### Pastilles « À lire » : titre court, légende complète et marque
+
+- **Titre court de l’affiche** : champ dédié limité à **75 caractères**, avec recommandation de **70 caractères / 12 mots maximum**, signalement visuel des titres trop longs et composition plafonnée à **3 lignes**. Les textes restent modifiables ; rien n'est tronqué silencieusement.
+- **Titre complet de l’article** : champ facultatif dépliable sous le titre court. Lorsqu'il est renseigné, le générateur de légendes Facebook « À lire » utilise le **titre complet** et les suggestions de hashtags sont calculées depuis celui-ci. Le titre court reste réservé à l'affiche.
+- **Pied de page** : tracés vectoriels officiels **Instagram, Facebook et X** de Simple Icons (CC0) intégrés directement dans le Canvas, harmonisés en **48 px** avec espacement constant. Aucune image distante à charger, donc l'export PNG reste autonome. Les marques restent soumises aux règles de leurs titulaires.
+- **Logo TV+** : conservation du fichier blanc transparent **TV+ avec la silhouette de l’Afrique**, extrait du visuel de référence fourni, sans redessin ou substitution.
+- Les deux titres sont conservés dans les brouillons par modèle et dans la sauvegarde locale IndexedDB.
+
+
 ## Recadrage photo
 
 Outil autonome avec import de photographie, déplacement, zoom, précision au clavier et export **JPG 1200 × 600** (qualité 94 %, sans déformation). Le résultat peut être réutilisé dans une affiche.
