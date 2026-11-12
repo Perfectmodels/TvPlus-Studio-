@@ -157,18 +157,10 @@ dlg.innerHTML=`
   </div>
   <details class="studio-shortener" id="studioShortenerPanel">
    <summary>Raccourcir un lien avec Rebrandly · l.tvplusafrique.com</summary>
-   <p class="studio-note">Cette action utilisera Rebrandly uniquement après configuration des secrets dans Vercel. L’accès est réservé à la rédaction.</p>
+   <p class="studio-note">Cette action crée automatiquement un lien court TV+ depuis l’adresse de votre article, après activation de Rebrandly dans Vercel.</p>
    <label>Adresse complète de l’article
     <input id="studioShortDestination" placeholder="https://www.tvplusafrique.com/..." type="url" inputmode="url" autocomplete="off">
    </label>
-   <div class="studio-form-grid">
-    <label>Nom court facultatif
-     <input id="studioShortSlug" maxlength="40" autocomplete="off" placeholder="Ex. article-gabon">
-    </label>
-    <label>Code d’accès rédaction
-     <input id="studioShortAccess" type="password" autocomplete="off" placeholder="Code défini dans Vercel">
-    </label>
-   </div>
    <div class="studio-editorial-actions"><button type="button" class="studio-accent" id="studioShortenAction">Créer le lien court</button></div>
    <p id="studioShortenStatus" class="studio-note" role="status"></p>
   </details>
@@ -375,7 +367,7 @@ async function checkShortener(){
   if(!res.ok)throw Error("Endpoint indisponible");
   const result=await res.json();
   shortenerConfigured=Boolean(result.configured);
-  label.textContent=shortenerConfigured?"Rebrandly configuré côté serveur. Entrez le code d’accès pour créer un lien.":"Raccourcisseur préparé, mais les secrets Rebrandly ne sont pas encore configurés dans Vercel.";
+  label.textContent=shortenerConfigured?"Rebrandly est disponible : collez le lien de l’article et créez son URL courte.":"Raccourcisseur prêt : renseignez REBRANDLY_API_KEY dans Vercel pour l’activer.";
  }catch(_){
   shortenerConfigured=false;
   label.textContent="Connexion Rebrandly non activée. Le générateur de légendes reste utilisable sans connexion.";
@@ -387,16 +379,14 @@ $("studioShortenerPanel").addEventListener("toggle",()=>{
 $("studioShortenAction").addEventListener("click",async()=>{
  const status=$("studioShortenStatus"),action=$("studioShortenAction");
  const destination=$("studioShortDestination").value.trim();
- const access=$("studioShortAccess").value;
  if(!/^https:\/\/(?:[a-z0-9-]+\.)*tvplusafrique\.com(?:[/:?#]|$)/i.test(destination)){
   status.textContent="Insérez une URL HTTPS de tvplusafrique.com.";return;
  }
- if(!access){status.textContent="Le code d’accès de la rédaction est nécessaire.";return;}
  action.disabled=true;status.textContent="Création du lien court…";
  try{
   const response=await fetch("/api/shorten",{
-   method:"POST",headers:{"Content-Type":"application/json","X-TVPLUS-ACCESS":access},
-   body:JSON.stringify({destination,title:state.headline||"TV+ Afrique",slashtag:$("studioShortSlug").value.trim()})
+   method:"POST",headers:{"Content-Type":"application/json"},
+   body:JSON.stringify({destination,title:state.headline||"TV+ Afrique"})
   });
   const result=await response.json();
   if(!response.ok)throw Error(result.error||"Création du lien impossible");
