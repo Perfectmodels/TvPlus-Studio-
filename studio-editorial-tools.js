@@ -163,6 +163,22 @@ dlg.innerHTML=`
    </label>
    <p class="studio-caption-title-note" id="studioCaptionTitleStatus" role="status" aria-live="polite">Recommandé : 75 caractères maximum, environ 12 mots. Le titre de l’affiche n’est pas modifié.</p>
   </div>
+  <details class="studio-article-title-tool" id="studioArticleHeadlineTool">
+   <summary>Analyser le contenu de l’article et générer un titre court</summary>
+   <div class="studio-article-headline-inner">
+    <p class="studio-note">Moteur extractif français open source (stopwords-fr · MIT), sans IA. Collez le contenu de l’article : l’analyse se fait dans votre navigateur.</p>
+    <label for="studioArticleBody">Contenu de l’article
+     <textarea id="studioArticleBody" rows="6" maxlength="26000" placeholder="Collez ici le texte intégral de l’article à analyser (communiqué, reportage ou actualité)…" spellcheck="true"></textarea>
+    </label>
+    <div class="studio-editorial-actions">
+     <button type="button" class="studio-accent" id="studioAnalyzeArticle">Analyser et générer des titres</button>
+     <button type="button" id="studioClearArticle">Effacer l’article</button>
+    </div>
+    <p class="studio-note" id="studioArticleAnalysisStatus" role="status"></p>
+    <div class="studio-title-suggestions" id="studioTitleSuggestions" role="group" aria-label="Choisir une proposition de titre court"></div>
+    <p class="studio-article-safety">Ces propositions sont extraites du contenu fourni et peuvent être incomplètes. Vérifiez toujours le sens, les noms, les montants et les dates avant publication.</p>
+   </div>
+  </details>
   <details class="studio-shortener" id="studioShortenerPanel">
    <summary>Raccourcir un lien avec Rebrandly · l.tvplusafrique.com</summary>
    <p class="studio-note">Cette action crée automatiquement un lien court TV+ depuis l’adresse de votre article, après activation de Rebrandly dans Vercel.</p>
@@ -244,6 +260,20 @@ style.textContent=`
 .studio-shortener label{margin-bottom:9px}
 .studio-shortener .studio-editorial-actions{margin:7px 0}
 #studioShortenStatus{min-height:16px}
+.studio-article-title-tool{border:1px solid #384b67;border-radius:10px;background:#11253d;margin:0 0 14px;overflow:hidden}
+.studio-article-title-tool[hidden]{display:none!important}
+.studio-article-title-tool summary{color:#ffd26a;font-weight:800;font-size:12px;padding:12px;cursor:pointer;line-height:1.3}
+.studio-article-headline-inner{padding:0 12px 12px}
+.studio-article-headline-inner label{font-size:11px;font-weight:800;color:#d6e3f5}
+#studioArticleBody{min-height:135px;max-height:320px;overflow:auto;resize:vertical}
+.studio-title-suggestions{display:grid;gap:9px;margin:9px 0}
+.studio-title-choice{border:1px solid #50607b;background:#192e48;border-radius:9px;color:#f0f5fc;text-align:left;padding:11px 12px;cursor:pointer;font:inherit;line-height:1.35}
+.studio-title-choice:hover,.studio-title-choice:focus-visible{border-color:#ffc21b;outline:none}
+.studio-title-choice[aria-pressed="true"]{border-color:#ffc21b;box-shadow:inset 3px 0 #ffc21b}
+.studio-title-choice strong{display:block;margin:2px 0 5px;font-size:13px;font-weight:850}
+.studio-title-choice small{font-size:10px;color:#a9bed6}
+.studio-article-safety{color:#c0d0df;font-size:10px;line-height:1.5;margin:10px 0 0}
+
 
 .studio-caption-title-box{background:#162840;border:1px solid #415675;border-radius:10px;padding:12px;margin:3px 0 13px}
 .studio-caption-title-box[hidden]{display:none!important}
@@ -316,12 +346,13 @@ openBtn.addEventListener("click",()=>show("caption"));
 $("studioCloseTools").addEventListener("click",()=>dlg.close());
 $("studioCloseFooter").addEventListener("click",()=>dlg.close());
 dlg.querySelectorAll("[data-tooltab]").forEach(b=>b.addEventListener("click",()=>tab(b.dataset.tooltab)));
-const fields=["studioCaptionType","studioCaptionLink","studioCaptionIntro","studioCaptionHashtags","studioCaptionTitle"];
-let captionTitleSource="",captionTitleCustomized=false;
+const fields=["studioCaptionType","studioCaptionLink","studioCaptionIntro","studioCaptionHashtags","studioCaptionTitle","studioArticleBody"];
+let captionTitleSource="",captionTitleCustomized=false,articleBoundTitle="";
 function saveCaptionSettings(){
  const v={};for(const id of fields)v[id]=$(id).value;
  v.captionTitleSource=captionTitleSource;
  v.captionTitleCustomized=captionTitleCustomized;
+ v.articleBoundTitle=articleBoundTitle;
  try{localStorage.setItem(stateKey,JSON.stringify(v));}catch(_){}
 }
 function loadCaptionSettings(){
@@ -330,6 +361,7 @@ function loadCaptionSettings(){
   for(const id of fields)if(typeof v[id]==="string")$(id).value=v[id];
   captionTitleSource=typeof v.captionTitleSource==="string"?v.captionTitleSource:"";
   captionTitleCustomized=v.captionTitleCustomized===true;
+  articleBoundTitle=typeof v.articleBoundTitle==="string"?v.articleBoundTitle:"";
  }catch(_){}
 }
 function boldSerif(text){
@@ -493,6 +525,7 @@ function syncCaptionTitle(force=false){
  const source=String(state.headline||"").trim();
  const currentType=$("studioCaptionType").value||"lire";
  $("studioCaptionTitleBlock").hidden=currentType!=="lire";
+ $("studioArticleHeadlineTool").hidden=currentType!=="lire";
  if(force||source!==captionTitleSource){
   $("studioCaptionTitle").value=source;
   captionTitleSource=source;
@@ -537,10 +570,69 @@ function prepareCaptionOnOpen(){
 loadCaptionSettings();
 fields.forEach(id=>$(id).addEventListener("input",()=>{
  if(id==="studioCaptionTitle")captionTitleCustomized=true;
+ if(id==="studioArticleBody")articleBoundTitle=String(state.headline||"").trim();
  generateCaption();
  saveCaptionSettings();
 }));
 $("studioCaptionRefresh").addEventListener("click",generateCaption);
+function applySuggestedHeadline(value,needsReview=false){
+ const title=String(value||"").trim();
+ if(!title)return;
+ $("studioCaptionTitle").value=title;
+ captionTitleSource=String(state.headline||"").trim();
+ captionTitleCustomized=true;
+ syncCaptionTitle();
+ generateCaption();
+ saveCaptionSettings();
+ $("studioCaptionStatus").textContent=needsReview?
+   "Un extrait a été raccourci automatiquement : relisez et reformulez si nécessaire avant de publier.":
+   "Titre court proposé depuis l’article, ajouté à la légende Facebook. Vérifiez les faits avant publication.";
+}
+$("studioAnalyzeArticle").addEventListener("click",()=>{
+ const message=$("studioArticleAnalysisStatus"),area=$("studioTitleSuggestions");
+ area.replaceChildren();
+ if($("studioCaptionType").value!=="lire"){message.textContent="L’analyse de l’article est réservée au modèle À lire.";return;}
+ const text=$("studioArticleBody").value.trim();
+ if(text.length<110){message.textContent="Collez un article plus complet (au moins 110 caractères) pour que l’analyse ait du sens.";return;}
+ if(articleBoundTitle&&articleBoundTitle!==String(state.headline||"").trim()){
+  message.textContent="Attention : cet article a été saisi pour une autre affiche. Vérifiez qu’il correspond bien au titre actuel avant l’analyse.";
+  articleBoundTitle=String(state.headline||"").trim();
+ }
+ const engine=window.TVPlusFrenchHeadlines;
+ if(!engine||typeof engine.suggest!=="function"){
+  message.textContent="L’outil français n’est pas chargé. Actualisez la page et réessayez.";return;
+ }
+ let data;
+ try{data=engine.suggest({article:text,headline:state.headline,category:state.category,maxChars:75,maxWords:12});}
+ catch(_){message.textContent="Impossible d’analyser ce texte. Essayez avec le contenu de l’article sans mise en forme.";return;}
+ if(!data.candidates?.length){message.textContent="Aucune formulation fiable trouvée : vérifiez le texte et proposez un titre manuellement.";return;}
+ const selected=data.candidates.findIndex(x=>!x.needsReview);
+ const index=selected>=0?selected:0;
+ for(const [i,item] of data.candidates.entries()){
+  const button=document.createElement("button");button.className="studio-title-choice";button.type="button";
+  const label=document.createElement("strong");label.textContent=item.title;
+  const hint=document.createElement("small");
+  hint.textContent=item.source+(item.needsReview?" · extrait à reformuler":" · extrait cohérent");
+  button.append(label,hint);
+  button.setAttribute("aria-pressed",String(i===index));
+  button.addEventListener("click",()=>{
+   area.querySelectorAll("button").forEach(b=>b.setAttribute("aria-pressed","false"));
+   button.setAttribute("aria-pressed","true");
+   applySuggestedHeadline(item.title,item.needsReview);
+  });
+  area.append(button);
+ }
+ applySuggestedHeadline(data.candidates[index].title,data.candidates[index].needsReview);
+ message.textContent=data.sentencesReviewed+" phrase(s) analysée(s) localement · "+data.candidates.length+" proposition(s). Sélectionnez une variante ou modifiez le titre.";
+});
+$("studioClearArticle").addEventListener("click",()=>{
+ $("studioArticleBody").value="";
+ $("studioTitleSuggestions").replaceChildren();
+ $("studioArticleAnalysisStatus").textContent="Article effacé de cet éditeur.";
+ articleBoundTitle="";
+ saveCaptionSettings();
+});
+
 $("studioGenerateHashtags").addEventListener("click",()=>{syncHashtagSuggestions(true);generateCaption();});
 $("studioCaptionCopy").addEventListener("click",async()=>{
  const text=$("studioCaptionPreview").value;
