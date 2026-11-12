@@ -323,7 +323,7 @@ function uniqueTags(type,extra){
   if(found.has(key))return false;found.add(key);return true;
  });
 }
-let initializedCaption=false;
+let lastCaptionMode=null;
 function suggestedType(){
  if(state.mode==="alerte")return "alerte";
  return "lire";
@@ -344,9 +344,11 @@ function generateCaption(){
  $("studioCaptionPreview").value=lines.join("\n");
 }
 function prepareCaptionOnOpen(){
- if(!initializedCaption){
+ // Update the default when the poster format changes, but keep a deliberately
+ // selected Reportage / 60 secondes type when staying on the same poster.
+ if(lastCaptionMode!==state.mode){
   $("studioCaptionType").value=suggestedType();
-  initializedCaption=true;
+  lastCaptionMode=state.mode;
  }
  generateCaption();
 }
