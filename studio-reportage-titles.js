@@ -141,7 +141,8 @@
   }
   function variants(value){
     const result=[];
-    const base=proofread(value).text.trim();
+    const corrected=proofread(value).text.trim();
+     const base=window.TVPlusHeadlineCase?.(corrected)||corrected;
     const add=(title,label)=>{
       title=String(title||"").trim().replace(/[.!?]+$/,"");
       if(title.length<8||result.some(x=>x.title.toLocaleLowerCase("fr")===title.toLocaleLowerCase("fr")))return;
