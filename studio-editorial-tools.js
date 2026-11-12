@@ -33,7 +33,7 @@ async function deleteDraft(mode){
 function status(text,kind=""){const x=$("studioSaveStatus");if(x){x.textContent=text;x.dataset.kind=kind;}}
 function readSnapshot(){
  return {
-  mode:state.mode,headline:state.headline,articleFullTitle:state.articleFullTitle||'',category:state.category,
+  mode:state.mode,headline:state.headline,category:state.category,
   details:$("details")?.value||"",speaker:$("speaker")?.value||"",role:$("role")?.value||"",
   highlighted:[...state.highlightedIndices],sizes:[...state.wordSizes],
   fontScale:state.fontScale,lineHeight:state.lineHeight,letterSpacing:state.letterSpacing,fontFamily:state.fontFamily,fontWeight:state.fontWeight,
@@ -95,7 +95,6 @@ async function applySaved(mode){
   const logo=await decodeBlob(row.logoBlob);
   if(state.mode!==mode)return false;
   state.headline=row.headline||"";
-  state.articleFullTitle=row.articleFullTitle||"";
   state.category=row.category||"";
   state.highlightedIndices=new Set(row.highlighted||[]);
   state.wordSizes=new Map(row.sizes||[]);
@@ -106,7 +105,7 @@ async function applySaved(mode){
   state.zoom=Number(row.zoom)||100;state.dx=Number(row.dx)||0;state.dy=Number(row.dy)||0;
   if(photo){state.image=photo;state.sample=false;}
   if(logo)state.logo=logo;
-  const edits={headline:row.headline||"",articleFullTitle:row.articleFullTitle||"",category:row.category||"",details:row.details||"",
+  const edits={headline:row.headline||"",category:row.category||"",details:row.details||"",
    speaker:row.speaker||"",role:row.role||"",fontScale:state.fontScale,pastilleLineHeight:state.lineHeight,pastilleLetterSpacing:state.letterSpacing,fontFamily:state.fontFamily,
    fontWeight:state.fontWeight,zoom:state.zoom,darkness:state.darkness,webText:state.website};
   for(const [id,value] of Object.entries(edits)){const el=$(id);if(el)el.value=value;}
@@ -120,7 +119,6 @@ async function applySaved(mode){
 function qualityIssues(){
  const list=[];
  if(!state.headline.trim())list.push("Le titre ou la citation est vide.");
- if(state.mode==="pastille"&&(state.headline.trim().length>70||state.headline.trim().split(/\s+/).length>12))list.push("Le titre court de la pastille est trop long : réduisez-le à 70 caractères ou 12 mots recommandés.");
  if(!state.image)list.push("Aucune photo n'est chargée.");
  else if(state.sample)list.push("La photo affichée est un exemple : remplacez-la avant publication.");
  if($("fitStatus")?.classList.contains("warning"))list.push("Le texte a été fortement réduit pour tenir dans l'affiche.");
@@ -158,6 +156,12 @@ dlg.innerHTML=`
    <label>Lien court de l’article (À lire)
     <input id="studioCaptionLink" type="url" placeholder="https://l.tvplusafrique.com/..." inputmode="url" autocomplete="off">
    </label>
+  </div>
+  <div class="studio-caption-title-box" id="studioCaptionTitleBlock">
+   <label for="studioCaptionTitle">Titre court pour la légende Facebook « À lire »
+    <textarea id="studioCaptionTitle" rows="2" maxlength="300" placeholder="Le titre utilisé dans la légende Facebook, indépendant du titre de l’affiche…" spellcheck="true"></textarea>
+   </label>
+   <p class="studio-caption-title-note" id="studioCaptionTitleStatus" role="status" aria-live="polite">Recommandé : 75 caractères maximum, environ 12 mots. Le titre de l’affiche n’est pas modifié.</p>
   </div>
   <details class="studio-shortener" id="studioShortenerPanel">
    <summary>Raccourcir un lien avec Rebrandly · l.tvplusafrique.com</summary>
@@ -241,6 +245,14 @@ style.textContent=`
 .studio-shortener .studio-editorial-actions{margin:7px 0}
 #studioShortenStatus{min-height:16px}
 
+.studio-caption-title-box{background:#162840;border:1px solid #415675;border-radius:10px;padding:12px;margin:3px 0 13px}
+.studio-caption-title-box[hidden]{display:none!important}
+.studio-caption-title-box label{margin:0!important;color:#eff5ff!important;font-size:12px!important;font-weight:850!important}
+.studio-caption-title-box textarea{min-height:66px;margin-top:8px;resize:vertical;line-height:1.4}
+.studio-caption-title-note{margin:9px 0 0;color:#a9bfd6;font-size:11px;line-height:1.4}
+.studio-caption-title-note.is-warning{color:#ffc26b}
+
+
 .studio-hashtag-box{border:1px solid #394e69;border-radius:12px;padding:13px;margin:13px 0;background:#132239}
 .studio-hashtag-head{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
 .studio-hashtag-head strong{font-size:13px;font-weight:850;color:#f3f7ff;display:block}
@@ -304,13 +316,21 @@ openBtn.addEventListener("click",()=>show("caption"));
 $("studioCloseTools").addEventListener("click",()=>dlg.close());
 $("studioCloseFooter").addEventListener("click",()=>dlg.close());
 dlg.querySelectorAll("[data-tooltab]").forEach(b=>b.addEventListener("click",()=>tab(b.dataset.tooltab)));
-const fields=["studioCaptionType","studioCaptionLink","studioCaptionIntro","studioCaptionHashtags"];
+const fields=["studioCaptionType","studioCaptionLink","studioCaptionIntro","studioCaptionHashtags","studioCaptionTitle"];
+let captionTitleSource="",captionTitleCustomized=false;
 function saveCaptionSettings(){
  const v={};for(const id of fields)v[id]=$(id).value;
+ v.captionTitleSource=captionTitleSource;
+ v.captionTitleCustomized=captionTitleCustomized;
  try{localStorage.setItem(stateKey,JSON.stringify(v));}catch(_){}
 }
 function loadCaptionSettings(){
- try{const v=JSON.parse(localStorage.getItem(stateKey)||"{}");for(const id of fields)if(typeof v[id]==="string")$(id).value=v[id];}catch(_){}
+ try{
+  const v=JSON.parse(localStorage.getItem(stateKey)||"{}");
+  for(const id of fields)if(typeof v[id]==="string")$(id).value=v[id];
+  captionTitleSource=typeof v.captionTitleSource==="string"?v.captionTitleSource:"";
+  captionTitleCustomized=v.captionTitleCustomized===true;
+ }catch(_){}
 }
 function boldSerif(text){
  // Mathematical bold serif Unicode renders as bold text after pasting into Facebook.
@@ -431,7 +451,7 @@ function titleKeywords(title,category){
 }
 let suggestedHashtags=[],chosenHashtags=new Set(),hashtagSignature="";
 function syncHashtagSuggestions(force=false){
- const relevantTitle=state.mode==="pastille"&&$("studioCaptionType").value==="lire"&&state.articleFullTitle?.trim()?state.articleFullTitle:state.headline;
+ const relevantTitle=state.headline;
  const signature=String(relevantTitle||"")+"|"+String(state.category||"");
  if(!force&&hashtagSignature===signature)return;
  hashtagSignature=signature;
@@ -469,10 +489,29 @@ function suggestedType(){
  if(state.mode==="alerte")return "alerte";
  return "lire";
 }
+function syncCaptionTitle(force=false){
+ const source=String(state.headline||"").trim();
+ const currentType=$("studioCaptionType").value||"lire";
+ $("studioCaptionTitleBlock").hidden=currentType!=="lire";
+ if(force||source!==captionTitleSource){
+  $("studioCaptionTitle").value=source;
+  captionTitleSource=source;
+  captionTitleCustomized=false;
+ }
+ const value=$("studioCaptionTitle").value.trim();
+ const length=[...value].length,words=value?value.split(/\s+/).length:0;
+ const warning=length>75||words>12;
+ const message=$("studioCaptionTitleStatus");
+ message.classList.toggle("is-warning",warning);
+ message.textContent=warning?
+  "Titre Facebook trop long ("+length+" caractères, "+words+" mots) : raccourcissez-le à 75 caractères et 12 mots maximum avant de copier. L’affiche reste inchangée.":
+  length+" / 75 caractères · "+words+" mot"+(words>1?"s":"")+". Ce titre ne modifie pas l’affiche ni la page de l’article.";
+ return {length,words,warning};
+}
 function generateCaption(){
  const type=$("studioCaptionType").value||"lire";
- const full=type==="lire"&&state.mode==="pastille"&&state.articleFullTitle?.trim()?state.articleFullTitle:state.headline;
- const title=(full||"").trim()||"[Titre de l’actualité à compléter]";
+ syncCaptionTitle();
+ const title=(type==="lire"?$("studioCaptionTitle").value:state.headline).trim()||"[Titre de l’actualité à compléter]";
  const link=$("studioCaptionLink").value.trim();
  const intro=$("studioCaptionIntro").value.trim();
  const lines=[titles[type]||titles.lire];
@@ -496,14 +535,29 @@ function prepareCaptionOnOpen(){
  generateCaption();
 }
 loadCaptionSettings();
-fields.forEach(id=>$(id).addEventListener("input",()=>{saveCaptionSettings();generateCaption();}));
+fields.forEach(id=>$(id).addEventListener("input",()=>{
+ if(id==="studioCaptionTitle")captionTitleCustomized=true;
+ generateCaption();
+ saveCaptionSettings();
+}));
 $("studioCaptionRefresh").addEventListener("click",generateCaption);
 $("studioGenerateHashtags").addEventListener("click",()=>{syncHashtagSuggestions(true);generateCaption();});
 $("studioCaptionCopy").addEventListener("click",async()=>{
  const text=$("studioCaptionPreview").value;
- if($("studioCaptionType").value==="lire"&&!$("studioCaptionLink").value.trim()){
-  $("studioCaptionStatus").textContent="Ajoutez le lien de l’article avant de publier la légende.";
-  $("studioCaptionLink").focus();return;
+ if($("studioCaptionType").value==="lire"){
+  const status=syncCaptionTitle();
+  if(!$("studioCaptionTitle").value.trim()){
+   $("studioCaptionStatus").textContent="Renseignez le titre court de la légende Facebook.";
+   $("studioCaptionTitle").focus();return;
+  }
+  if(status.warning){
+   $("studioCaptionStatus").textContent="Raccourcissez d’abord le titre de la légende Facebook (75 caractères et 12 mots maximum).";
+   $("studioCaptionTitle").focus();return;
+  }
+  if(!$("studioCaptionLink").value.trim()){
+   $("studioCaptionStatus").textContent="Ajoutez le lien de l’article avant de publier la légende.";
+   $("studioCaptionLink").focus();return;
+  }
  }
  try{
   if(navigator.clipboard&&window.isSecureContext)await navigator.clipboard.writeText(text);
