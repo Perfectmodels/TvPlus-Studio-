@@ -1,27 +1,38 @@
 # TV+ Studio — générateur d'affiches TV+ Afrique
 
-Quatre modèles éditoriaux dans une interface web statique, responsive et directement utilisable.
+Application web d'édition graphique connectée à GitHub et déployée automatiquement sur Vercel.
 
 ## Modèles
 
-- **Pastille** (1:1) : catégorie, titre avec mots cliquables surlignés en jaune, typographie Barlow et pied de page TV+.
-- **Alerte info** (1:1) : bandeau rouge et titre clair.
-- **Décryptage** (16:9) : photo à gauche, découpe diagonale, panneau bleu nuit à droite, catégorie jaune, titre, question d'analyse et appel à lire l'article. Une photo de démonstration provient du modèle de référence fourni.
-- **Verbatim** (1:1) : photo de l'intervenant, voile foncé, citation, nom, fonction, filet rouge et logo TV+. Pour éviter les textes déjà incrustés, importez la photo originale du portrait.
+- **Pastille** (1:1) : catégorie, titre, mots-clés jaunes en cliquant sur les mots et réglages de taille.
+- **Alerte info** (1:1) : bandeau rouge et titre blanc.
+- **Décryptage** (16:9) : photo à gauche, découpe diagonale, catégorie et textes sur panneau bleu nuit.
+- **Verbatim** (1:1) : grande citation dans une **colonne alignée à gauche**, photo assombrie et portrait visible à droite, nom/fonction et filet rouge.
 
-## Édition
+## Outil distinct de recadrage photo
 
-Saisissez un titre une fois ; les mots de la Pastille sont cliquables pour activer/retirer le jaune. Le mode « Régler la taille » ajuste certains mots des titres et citations ; le curseur de taille générale et l'ajustement automatique protègent les marges. Les réglages de modèle se conservent pendant la session lorsque vous changez de modèle.
+Le bouton **Recadrer une image** ouvre un espace dédié au format paysage **1200 × 600 px (2:1)** sans affecter l'affiche en cours.
 
-L'image peut être importée au format JPG, PNG ou WEBP, et cadrée/zoomée dans l'aperçu. Le logo TV+ peut être remplacé par son fichier officiel transparent. La famille **Barlow** est disponible en Regular, Semi Condensed et Condensed avec plusieurs graisses.
+- Import JPG, PNG ou WEBP (30 Mo maximum).
+- Reprendre facultativement la photo actuellement importée dans l'affiche.
+- Cadrage automatique proportionnel, sans étirement.
+- Déplacement au doigt, à la souris, aux touches fléchées ou aux boutons de précision.
+- Zoom de 100 à 300 % et recentrage.
+- Télécharger en PNG de **1200 × 600 px exacts**.
+- Option facultative **Utiliser l'image recadrée dans l'affiche** : action explicite, sans altérer l'image originale.
 
-## Export et déploiement
+Les images et les textes restent dans le navigateur. Aucune image n'est envoyée à un serveur lors du recadrage.
 
-- Export PNG pour les modèles carrés : 1080, 1200 ou 2048 px.
-- Export PNG pour Décryptage : 1600×900, 1920×1080 ou 2560×1440.
-- Site statique à fichier unique `index.html`, sans backend ni commande de build.
-- La branche `main` de ce dépôt est connectée à Vercel et déploie automatiquement le site.
+## Fonctionnalités générales
+
+Polices **Barlow**, **Barlow Semi Condensed** et **Barlow Condensed**, graisses 700/800/900 ; ajustement automatique des titres pour ne pas empiéter sur le pied de page ; export PNG en résolutions carrées ou 16:9 ; repositionnement des photographies et remplacement du logo.
+
+## Déploiement
+
+Site statique contenu dans `index.html`, sans étape de compilation. Vercel est connecté à la branche GitHub `main` et déploie les modifications automatiquement.
+
+Pour ouvrir le site localement, ouvrir `index.html` dans un navigateur récent. Les polices Barlow sont chargées depuis Google Fonts lorsque l'accès Internet est disponible.
 
 ## Limites
 
-Les images et textes ne sont pas envoyés vers un backend ; aucun compte ni sauvegarde collaborative n'est encore configuré. L'export est généré dans le navigateur. Google Fonts nécessite Internet pour charger Barlow ; une police de remplacement est disponible hors ligne.
+Pas encore de comptes utilisateurs, d'archives partagées ou de liaison directe avec le CMS TV+.
