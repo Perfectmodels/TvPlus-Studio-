@@ -67,13 +67,12 @@ Le titre est repris depuis l’affiche, puis transformé en caractères gras Uni
 
 ### Raccourcissement Rebrandly (serveur uniquement)
 
-Le bouton **Raccourcir un lien** utilise `POST /api/shorten`, une fonction Vercel indépendante. Les requêtes côté client ne contiennent **jamais** la clé Rebrandly. Le serveur limite les URL aux pages HTTPS de `tvplusafrique.com`, vérifie l’origine, exige un code d’accès fort de la rédaction et force le domaine de sortie `l.tvplusafrique.com`. Le code n'est pas publié dans GitHub.
+Dans **Rédaction & brouillons → Légende Facebook → Raccourcir un lien**, il suffit de coller une URL complète d'article TV+ Afrique puis de cliquer sur **Créer le lien court**. Rebrandly génère automatiquement le nom court sous `l.tvplusafrique.com`. Aucun code d'accès, nom personnalisé ni Workspace ID n'est demandé à l'utilisateur.
 
-**Pour activer :** dans le projet Vercel `tvplus-studio`, ouvrez **Settings → Environment Variables** et ajoutez en **Production** :
-- `REBRANDLY_API_KEY` : une **nouvelle** clé Rebrandly, à traiter comme un secret ;
-- `TVPLUS_SHORTENER_ACCESS_CODE` : code privé fort, utilisé par les rédacteurs pour créer des liens ;
-- `REBRANDLY_WORKSPACE_ID` (facultatif) : si le domaine `l.tvplusafrique.com` appartient à un autre espace de travail Rebrandly.
+**Configuration nécessaire dans Vercel :** ajoutez uniquement `REBRANDLY_API_KEY` comme variable d'environnement **sensitive** en **Production**, puis redéployez l'application. Utilisez de préférence une clé API nouvellement générée, puisque l'ancienne a été communiquée dans une conversation.
 
-Redéployez le projet après modification des variables d'environnement et ouvrez `/api/shorten` : `configured` doit alors passer de `false` à `true`. Tant que ces variables sont absentes, les légendes fonctionnent mais la création de liens courts renvoie une erreur explicite sans exposer la clé.
+L'API Rebrandly est appelée uniquement côté serveur via `POST /api/shorten`. Sa clé n'est jamais exposée par le navigateur ou stockée dans GitHub. Le serveur accepte uniquement les destinations HTTPS de `tvplusafrique.com`, vérifie l'origine de la requête, limite le nombre d'opérations par adresse IP et force la sortie sur le domaine court TV+.
 
-Le raccourcisseur interroge `GET /v1/domains` pour vérifier le domaine de la rédaction, puis `POST /v1/links` pour créer un lien. Le domaine doit être vérifié et partagé dans le workspace courant. La protection par code d’accès ne remplace pas une authentification nominative : ajouter ultérieurement des comptes rédaction est recommandé.
+**Sécurité à connaître :** sans code d'accès ni authentification, le point d'accès est public. La vérification d'origine et la limitation en mémoire réduisent les abus courants mais ne constituent pas une authentification fiable et la limitation en mémoire n'est pas partagée entre toutes les instances Vercel. Pour un usage réel avec la clé API active, restreignez l'accès à la rédaction via une authentification du site ou un mécanisme anti-abus persistant (Vercel Firewall / limitation de débit). Ne considérez pas cette API comme protégée tant que cette couche n'est pas en place.
+
+Le serveur interroge `GET /v1/domains` et `POST /v1/links`. Le domaine `l.tvplusafrique.com` doit être disponible dans le compte lié à la clé Rebrandly.
