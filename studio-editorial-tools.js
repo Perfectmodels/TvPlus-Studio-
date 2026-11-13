@@ -1,8 +1,8 @@
 (function tvplusEditorialTools() {
 "use strict";
 const $ = id => document.getElementById(id);
-const modes = ["pastille","alerte","decryptage","verbatim"];
-const labels = {pastille:"Pastille",alerte:"Alerte info",decryptage:"Décryptage",verbatim:"Verbatim"};
+const modes = ["pastille","alerte","decryptage","verbatim","caalors","sondage"];
+const labels = {pastille:"Pastille",alerte:"Alerte info",decryptage:"Décryptage",verbatim:"Verbatim",caalors:"Ça alors !",sondage:"Le Sondage TV+"};
 const DB_NAME="tvplus-editorial-local-v1", STORE="posters", LAST="tvplus:last-edit-mode";
 const stateKey="tvplus:caption-settings-v1";
 let dbPromise=null, restoring=true, pending=null, queue=Promise.resolve();
@@ -40,6 +40,7 @@ function readSnapshot(){
   darkness:state.darkness,website:state.website,zoom:state.zoom,dx:state.dx,dy:state.dy,
   sample:state.sample,photoRef:!state.sample?state.image:null,
   logoRef:state.logo&&state.logo.src!==DEFAULT_LOGO?state.logo:null,
+  extra:window.TVPlusExtraTemplates?.snapshot(state.mode)||null,
   updatedAt:Date.now()
  };
 }
@@ -113,16 +114,23 @@ async function applySaved(mode){
   if(typeof setCategoryValue==="function")setCategoryValue(row.category||"");
   const values={fontScaleLabel:state.fontScale+" %",pastilleLineHeightLabel:state.lineHeight.toFixed(2).replace('.',',')+"×",pastilleLetterSpacingLabel:(state.letterSpacing>0?'+':'')+String(state.letterSpacing).replace('.',',')+" px",pastilleWidthPercentLabel:state.widthPercent===100?"100 % · naturelle":state.widthPercent+" %",zoomLabel:state.zoom+" %",darknessLabel:state.darkness+" %",photoName:photo?"Photo retrouvée dans le brouillon":"Photo du modèle"};
   for(const [id,value] of Object.entries(values))if($(id))$(id).textContent=value;
+  window.TVPlusExtraTemplates?.restore(mode,row.extra);
   renderTokens();draw();status("Brouillon retrouvé · "+labels[mode],"ok");return true;
  }finally{restoring=false;}
 }
 function qualityIssues(){
  const list=[];
  if(!state.headline.trim())list.push("Le titre ou la citation est vide.");
- if(!state.image)list.push("Aucune photo n'est chargée.");
- else if(state.sample)list.push("La photo affichée est un exemple : remplacez-la avant publication.");
+ if(state.mode!=="sondage"){
+  if(!state.image)list.push("Aucune photo n'est chargée.");
+  else if(state.sample)list.push("La photo affichée est un exemple : remplacez-la avant publication.");
+ }
+ if(state.mode==="sondage"){
+  for(const [key,label] of [["pollA","A"],["pollB","B"],["pollC","C"],["pollD","D"]])if(!($(key)?.value||"").trim())list.push("Réponse "+label+" du sondage vide.");
+ }
+ if(state.mode==="caalors"&&!($("caChapeau")?.value||"").trim())list.push("Le chapeau du format Ça alors ! est vide.");
  if($("fitStatus")?.classList.contains("warning"))list.push("Le texte a été fortement réduit pour tenir dans l'affiche.");
- const w=Number($("exportSize")?.value||1200),h=state.mode==="decryptage"?Math.round(w*9/16):w;
+ const w=Number($("exportSize")?.value||1200),h=state.mode==="decryptage"?Math.round(w*9/16):state.mode==="sondage"?Math.round(w*5/4):w;
  if(state.image&&!state.sample&&Math.min(state.image.naturalWidth||w,state.image.naturalHeight||h)<Math.min(w,h)*.55)
   list.push("La photo source est petite pour la résolution d'export choisie.");
  if(state.mode==="decryptage"&&!($("details")?.value||"").trim())list.push("L'angle ou la question du décryptage est vide.");
@@ -750,7 +758,7 @@ $("studioOptimizedExport").addEventListener("click",async()=>{
  const target=$("studioOptimizedStatus");target.textContent="Préparation du fichier…";
  try{
   await document.fonts.ready;draw();
-  const w=Number($("exportSize")?.value||1200),h=state.mode==="decryptage"?Math.round(w*9/16):w;
+  const w=Number($("exportSize")?.value||1200),h=state.mode==="decryptage"?Math.round(w*9/16):state.mode==="sondage"?Math.round(w*5/4):w;
   const c=document.createElement("canvas");c.width=w;c.height=h;
   const g=c.getContext("2d");if(!g)throw Error("Canvas non pris en charge");
   g.imageSmoothingEnabled=true;g.imageSmoothingQuality="high";g.drawImage($("poster"),0,0,w,h);
