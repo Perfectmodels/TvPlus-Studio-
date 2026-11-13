@@ -861,7 +861,7 @@ function drawNew(){
 }
 draw=function(){if(addedModes.includes(state.mode))drawNew();else{
  if(poster.width!==1200||poster.height!==1200){poster.width=1200;poster.height=1200;}
- $('canvasShell').classList.remove('is-wide');poster.style.aspectRatio='1 / 1';preexistingDraw();
+ $('canvasShell').classList.remove('is-wide','is-portrait');poster.style.aspectRatio='1 / 1';preexistingDraw();
 }};
 function storeCurrent(){drafts[state.mode]={headline:state.headline,category:state.category,details:detailText,speaker:speakerText,role:roleText,image:state.image,sample:state.sample,zoom:state.zoom,dx:state.dx,dy:state.dy,lineHeight:state.lineHeight,letterSpacing:state.letterSpacing,widthPercent:state.widthPercent,highlightedIndices:new Set(state.highlightedIndices),wordSizes:new Map(state.wordSizes)};}
 function restoreMode(mode){const d=drafts[mode]||defaults[mode];state.headline=d.headline||'';setCategoryValue(d.category||'');detailText=d.details||'';speakerText=d.speaker||'';roleText=d.role||'';state.image=d.image===undefined?state.image:d.image;state.sample=d.sample===undefined?true:d.sample;state.zoom=d.zoom||100;state.dx=d.dx||0;state.dy=d.dy||0;state.lineHeight=Number(d.lineHeight)||1.16;state.letterSpacing=Number(d.letterSpacing)||0;state.widthPercent=Number(d.widthPercent)||100;syncPastilleSpacing();state.highlightedIndices=new Set(d.highlightedIndices||[]);state.wordSizes=new Map(d.wordSizes||[]);state.sizeSelection.clear();
