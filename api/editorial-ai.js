@@ -3,6 +3,8 @@
 const TASKS={
  correction:"Corriger orthographe, accords, grammaire et ponctuation sans changer les faits.",
  titre_affiche:"Proposer 3 à 5 titres d'affiche TV+ factuels et percutants en casse normale, sans majuscules intégrales. Ne changer aucun fait.",
+ ca_alors:"Pour le format éditorial Ça alors !, propose un titre marquant sans sensationnalisme et un chapeau court. Ne rajoute aucune information non présente. Utilise title pour le titre, text pour le chapeau, options pour 2 à 4 variantes de titre.",
+ sondage:"Pour Le Sondage TV+, reformule la question du public de manière neutre et propose EXACTEMENT quatre réponses distinctes, équilibrées, non orientées, factuellement défendables, dans options. title contient le titre/question, text une courte précision, sans inventer de statistiques ni insérer un résultat de vote.",
  decryptage:"Proposer des titres de décryptage sobres et un angle sous forme de question, sans affirmer de faits non établis.",
  citation:"Améliorer uniquement la ponctuation et l'orthographe de la citation sans modifier les mots ni le sens. Si une reformulation est nécessaire, la signaler.",
  hashtags:"Proposer 4 à 8 hashtags pertinents issus des faits fournis et des noms propres, sans en inventer.",
@@ -54,12 +56,12 @@ function validated(raw){
  if(!title&&!article&&raw.task!=="photo_description")return null;
  if(["titre_court","resume","angles","seo","article","vigilance"].includes(raw.task)&&article.length<80)return null;
  return {task:raw.task,title,article,image:raw.task==="photo_description"?raw.image:undefined,
-  format:["lire","alerte","reportage","60secondes","pastille","decryptage","verbatim","photo"].includes(raw.format)?raw.format:"lire",
+  format:["lire","alerte","reportage","60secondes","pastille","decryptage","verbatim","photo","caalors","sondage"].includes(raw.format)?raw.format:"lire",
   tone:["journalistique","institutionnel","neutre","dynamique","factuel"].includes(raw.tone)?raw.tone:"journalistique",
   language:["fr","en","es","pt"].includes(raw.language)?raw.language:"fr"};
 }
 function parse(out,task){
- const titleTask=new Set(["titre_affiche","titre_court","reformulation","decryptage","seo","legende","controle_qualite","hashtags"]);
+ const titleTask=new Set(["titre_affiche","titre_court","reformulation","decryptage","seo","legende","controle_qualite","hashtags","ca_alors","sondage"]);
  const parts=[];
  if(typeof out?.output_text==="string")parts.push(out.output_text);
  else for(const entry of out?.output||[])if(entry.type==="message")for(const c of entry.content||[])if(c.type==="output_text")parts.push(c.text);
