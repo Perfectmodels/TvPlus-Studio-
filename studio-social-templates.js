@@ -241,10 +241,10 @@
   g.fillText('Ça',0,0);g.fillText('alors !',-10,102);g.restore();
   g.save();g.strokeStyle=YELLOW;g.lineWidth=6;g.beginPath();g.moveTo(113,556);g.quadraticCurveTo(230,522,375,537);g.stroke();g.restore();
   const title=state.headline||'Votre titre principal ici';
-  const titleInfo=coloredTitle(g,title,d.accent,600,660,1080,178,62);
-  textBlock(g,d.subline,600,840,1090,104,49,{weight:900,lines:2,min:27});
-  g.save();g.strokeStyle='rgba(255,199,24,.8)';g.lineWidth=2;g.beginPath();g.moveTo(70,960);g.lineTo(1130,960);g.stroke();g.restore();
-  textBlock(g,d.chapeau,600,983,1070,118,31,{weight:600,color:'#f3c156',lines:3,min:20,lineHeight:1.1});
+  const titleInfo=coloredTitle(g,title,d.accent,600,624,1080,146,60);
+  textBlock(g,d.subline,600,785,1090,111,45,{weight:900,lines:2,min:26});
+  g.save();g.strokeStyle='rgba(255,199,24,.8)';g.lineWidth=2;g.beginPath();g.moveTo(70,905);g.lineTo(1130,905);g.stroke();g.restore();
+  textBlock(g,d.chapeau,600,932,1070,108,30,{weight:600,color:'#f3c156',lines:3,min:19,lineHeight:1.1});
   footer(g,W,H);
   return {size:titleInfo.size};
  }
@@ -284,8 +284,8 @@
   textBlock(g,d.subline,600,830,1070,96,35,{weight:700,lines:2,min:25,color:'#fff'});
   answer(g,'A',d.a,60,946,0);answer(g,'B',d.b,630,946,1);
   answer(g,'C',d.c,60,1090,2);answer(g,'D',d.d,630,1090,3);
-  rect(g,128,1263,944,120,YELLOW,58);
-  textBlock(g,d.cta,600,1289,815,80,37,{color:DARK,weight:900,lines:2,min:24,lineHeight:1.06});
+  rect(g,128,1244,944,112,YELLOW,54);
+  textBlock(g,d.cta,600,1266,815,74,37,{color:DARK,weight:900,lines:2,min:24,lineHeight:1.06});
   footer(g,W,H);
   return {size:h.size};
  }
