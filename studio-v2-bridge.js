@@ -35,12 +35,16 @@
     const selected = chosen?.name || "";
     select.replaceChildren(...entries.map((category) => {
       const option = document.createElement("option");
-      option.value = category.name.toLocaleUpperCase("fr");
+      const upper = category.name.toLocaleUpperCase("fr");
+      option.value = upper === "FAITS DIVERS" ? "FAIT DIVERS" : upper;
       option.textContent = category.name;
       return option;
     }));
     const matching = entries.find((category) => category.name === selected);
-    if (matching) select.value = matching.name.toLocaleUpperCase("fr");
+    if (matching) {
+      const value = matching.name.toLocaleUpperCase("fr");
+      select.value = value === "FAITS DIVERS" ? "FAIT DIVERS" : value;
+    }
     select.dispatchEvent(new Event("input", { bubbles: true }));
     select.dispatchEvent(new Event("change", { bubbles: true }));
     document.querySelectorAll(".tvplus-category-hint").forEach((hint) => {
@@ -106,6 +110,14 @@
     else label.textContent = "Ligne Rouge";
     label.title = "Ligne Rouge — citations et prises de parole";
   }
+  function renameLineRouge() {
+    const tab = $("verbatimBtn");
+    const heading = tab?.querySelector(".tab-title");
+    if (heading) heading.textContent = "Ligne Rouge";
+    else if (tab) tab.textContent = "Ligne Rouge";
+    const mobile = $("mobileModelChip");
+    if (mobile && mobile.textContent?.trim() === "Verbatim") mobile.textContent = "Ligne Rouge";
+  }
+  window.addEventListener("load", () => { renameLineRouge(); announce(); }, { once: true });
   announce();
-  window.addEventListener("load", announce, { once: true });
 })();
