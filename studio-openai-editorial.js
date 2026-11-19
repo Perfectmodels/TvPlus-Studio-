@@ -47,9 +47,9 @@ try{auto.checked=sessionStorage.getItem("tvplus-ai-auto")!=="0"}catch(_){}
 function title(){
  const linked=window.TVPlusAutoArticle?.current;
  return kind.value==="lire"?String($("studioCaptionTitle")?.value||linked?.title||"").trim():
- String($("studioOnlyTitleInput")?.value||$("headline")?.value||"").trim();
+ String(window.TVPlusFormatTitles?.getTitle(kind.value)||"").trim();
 }
-function article(){return String($("studioArticleBody")?.value||"").trim()}
+function article(){return kind.value==="lire"?String($("studioArticleBody")?.value||"").trim():String(window.TVPlusFormatTitles?.getContext(kind.value)||"").trim()}
 function source(){return scope.value==="article"?article():scope.value==="caption"?String($("studioCaptionPreview")?.value||"").trim():title()}
 function requestData(name){
  const subject=title(),body=article();
@@ -60,14 +60,17 @@ function requestData(name){
  if(!subject&&!body)throw Error("Saisissez un titre ou récupérez le contenu de l’article.");
  // For a headline request, send the ACTUAL article, not merely a duplicate of its title.
  return {task:name,title:headlineTask&&official?official:subject,
-  article:needsArticle||(headlineTask&&body.length>=80)?body:(scope.value==="article"?body:source()),
+  article:needsArticle||headlineTask?body:(scope.value==="article"?body:source()),
   format:kind.value||"lire",tone:$("tvplusAITone").value,language:$("tvplusAILanguage").value};
 }
 function show(result){
  choices.replaceChildren();
  const headlineTask=["titre_court","reformulation","titre_affiche","decryptage"].includes(task.value);
- const candidates=(headlineTask?[result.title,...(result.options||[])]:[result.text,result.title,...(result.options||[])]).filter(x=>typeof x==="string"&&x.trim());
+ const proposed=headlineTask?[result.title,...(result.options||[])]:[result.text,result.title,...(result.options||[])];
+ const candidates=proposed.filter(x=>typeof x==="string"&&x.trim()).filter(x=>
+  kind.value!=="60secondes"||!headlineTask||([...x].length<=75&&x.trim().split(/\s+/).length<=12));
  const unique=[...new Set(candidates)];
+ if(!unique.length)throw Error("Aucun titre assez court pour En 60 secondes. Relancez la génération.");
  for(const value of unique.slice(0,7)){
   const b=document.createElement("button");b.type="button";b.textContent=value.length>240?value.slice(0,237)+"…":value;
   b.addEventListener("click",()=>{output.value=value;stat.textContent="Texte sélectionné. Relisez avant de l’appliquer."});
@@ -78,16 +81,19 @@ function show(result){
  else stat.textContent="Propositions disponibles. Validation humaine requise.";
 }
 function apply(value){
+ if(lastSuggestionFormat&&lastSuggestionFormat!==kind.value){stat.textContent="Proposition d’un autre format. Relancez la génération.";return;}
  const chosen=scope.value==="article"?$("studioArticleBody"):scope.value==="caption"?$("studioCaptionPreview"):
- kind.value==="lire"?$("studioCaptionTitle"):$("studioOnlyTitleInput")||$("studioCaptionTitle");
+ kind.value==="lire"?$("studioCaptionTitle"):window.TVPlusFormatTitles?.getInput(kind.value);
  if(!chosen)return;
  chosen.value=value;chosen.dispatchEvent(new Event("input",{bubbles:true}));
  chosen.focus();
  stat.textContent="Suggestion appliquée. Vérifiez le contenu avant publication.";
 }
-let busy=false;
+let busy=false,lastSuggestionFormat=null;
 async function run(name,automatic=false){
  if(busy)return;
+ task.value=name;
+ if(["reformulation","titre_affiche","titre_court"].includes(name))scope.value="title";
  let input;try{input=requestData(name)}catch(e){stat.textContent=e.message;return}
  busy=true;const b=$("tvplusAIRun");b.disabled=true;
  stat.textContent="Analyse rédactionnelle en cours…";
@@ -95,7 +101,8 @@ async function run(name,automatic=false){
   const res=await fetch("/api/editorial-ai",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(input),cache:"no-store"});
   const data=await res.json().catch(()=>({}));
   if(!res.ok)throw Error(data.error||"Erreur OpenAI.");
-  show(data.result);
+  if(kind.value!==input.format){stat.textContent="Le format a changé durant l’analyse. Relancez la génération.";return;}
+  show(data.result);lastSuggestionFormat=input.format;
   if(automatic){
    const current=window.TVPlusAutoArticle?.current;
    if(!current||current.title!==input.title||kind.value!=="lire")return;
@@ -121,6 +128,7 @@ $("tvplusAICopy").addEventListener("click",async()=>{
 });
 auto.addEventListener("change",()=>{try{sessionStorage.setItem("tvplus-ai-auto",auto.checked?"1":"0")}catch(_){}});
 document.addEventListener("tvplus:article-ready",()=>{if(auto.checked&&kind.value==="lire")run("titre_court",true)});
+kind.addEventListener("change",()=>{lastSuggestionFormat=null;choices.replaceChildren();output.value="";stat.textContent="Format changé : relancez une génération adaptée.";});
 panel.addEventListener("toggle",async()=>{
  if(!panel.open)return;
  const target=$("tvplusAIConnection");
