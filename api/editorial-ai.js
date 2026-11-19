@@ -116,7 +116,7 @@ module.exports=async function handler(req,res){
   let failure={};try{failure=await response.json()}catch(_){}
   const code=String(failure?.error?.code||failure?.error?.type||"");
   if(response.status===429){
-   if(/insufficient_quota|billing_hard_limit_reached|billing_not_active|quota_exceeded/i.test(code))
+   if(/insufficient_quota|billing_hard_limit_reached|billing_not_active|quota_exceeded|credit_balance_exhausted|organization_usage_limit_exceeded|organization_spend_limit_exceeded|project_spend_limit_exceeded/i.test(code+" "+String(failure?.error?.message||"")))
     return send(res,503,{error:"Crédits ou plafond de dépenses de l'API OpenAI épuisés. Vérifiez la facturation et les limites du projet OpenAI; le titre local reste disponible.",code:"OPENAI_QUOTA_EXHAUSTED"});
    const retry=Number(response.headers.get("retry-after"));
    return send(res,429,{error:"OpenAI reçoit trop de requêtes simultanées. Réessayez dans un instant; le titre local reste disponible.",code:"OPENAI_RATE_LIMIT",retryAfter:Number.isFinite(retry)&&retry>0&&retry<3600?retry:undefined});
