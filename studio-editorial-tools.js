@@ -575,6 +575,8 @@ function syncCaptionTitle(force=false){
 function generateCaption(){
  const type=$("studioCaptionType").value||"lire";
  syncCaptionTitle();
+ // Independent formats use their own title, context and preview, not the poster/À lire draft.
+ if(type!=="lire"&&window.TVPlusFormatTitles?.renderCaption?.())return;
  const title=(type==="lire"?$("studioCaptionTitle").value:state.headline).trim()||"[Titre de l’actualité à compléter]";
  const link=$("studioCaptionLink").value.trim();
  const intro=$("studioCaptionIntro").value.trim();
