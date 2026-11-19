@@ -20,6 +20,11 @@ const TASKS={
  traduction:"Traduire fidèlement le texte dans la langue demandée.",
  vigilance:"Signaler les faits, citations, montants et dates qui doivent être vérifiés par un journaliste."
 };
+const HEADLINE_GUIDANCE={
+ reportage:"FORMAT REPORTAGE TV+ : titre journalistique de terrain, informatif et naturel, exprimant l'angle du sujet. Ne pas adopter la forme d'une alerte ni imposer la limite de 75 caractères propre aux capsules.",
+ "60secondes":"FORMAT EN 60 SECONDES TV+ : titre bref, direct, autosuffisant, maximum 75 caractères et 12 mots pour CHACUNE des propositions. Éviter les formules 'Reportage', 'Immersion' ou 'À lire'. Synthétiser l'unique fait essentiel.",
+ alerte:"FORMAT ALERTE INFO TV+ : titre strictement factuel sur une information majeure vérifiée; ne pas présenter d'hypothèse comme acquise."
+};
 const SCHEMA={type:"object",properties:{title:{type:"string"},text:{type:"string"},
  options:{type:"array",items:{type:"string"}},hashtags:{type:"array",items:{type:"string"}},
  issues:{type:"array",items:{type:"string"}},notes:{type:"array",items:{type:"string"}}},
@@ -95,6 +100,7 @@ module.exports=async function handler(req,res){
    "Avant de proposer des titres, identifier silencieusement les faits principaux : qui, quoi, où, quand et conséquence, UNIQUEMENT quand ils figurent dans le texte.",
    "Produire des titres journalistiques complets, autonomes et naturels : éviter les phrases tronquées, les ellipses et les reprises quasi identiques du titre original.",
    "Pour les tâches de titres, title est la meilleure proposition; options contient des alternatives réellement différentes, fidèles aux faits de l'article.",
+   "Respecte impérativement les contraintes propres au format éditorial sélectionné : REPORTAGE, EN 60 SECONDES ou ALERTE INFO. Ne mélange jamais leurs conventions.",
    "Le titre Facebook est généré à partir du titre officiel de l'article et du contenu, JAMAIS du titre de la Pastille.",
    "Les titres courts Facebook ont 75 caractères et 12 mots maximum; cette limite ne concerne pas les titres d'affiche.",
    "OBLIGATOIRE : titres journalistiques en casse normale (première lettre en majuscule, noms propres et acronymes respectés), JAMAIS EN MAJUSCULES INTÉGRALES. N'utilise pas le title case anglais.",
@@ -102,9 +108,9 @@ module.exports=async function handler(req,res){
    "Préserve les noms propres, dates et montants. Rien ne doit être publié automatiquement."
   ].join("\n"),
   input:[{role:"user",content:input.image?[
-    {type:"input_text",text:JSON.stringify({directive:TASKS[input.task],task:input.task,title:input.title,article:input.article,format:input.format,tone:input.tone,language:input.language})},
+    {type:"input_text",text:JSON.stringify({directive:TASKS[input.task],formatGuide:HEADLINE_GUIDANCE[input.format]||"",task:input.task,title:input.title,article:input.article,format:input.format,tone:input.tone,language:input.language})},
     {type:"input_image",image_url:input.image}
-   ]:JSON.stringify({directive:TASKS[input.task],...input})}],
+   ]:JSON.stringify({directive:TASKS[input.task],formatGuide:HEADLINE_GUIDANCE[input.format]||"",...input})}],
   text:{format:{type:"json_schema",name:"tvplus_editorial",strict:true,schema:SCHEMA}}};
  let response;
  try{response=await fetch("https://api.openai.com/v1/responses",{method:"POST",
