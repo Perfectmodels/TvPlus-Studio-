@@ -233,7 +233,9 @@
   $("studioRewriteTitle").addEventListener("click",()=>{
     suggestions.replaceChildren();
     const title=activeInput().value.trim();
-    if(!title){status.textContent="Saisissez un titre avant la reformulation.";return;}
+    const brief=storedType()?window.TVPlusFormatTitles?.getContext(kindNow())||"":"";
+    if(!title&&!brief){status.textContent="Saisissez un titre ou les informations clés de ce format pour générer des propositions.";return;}
+    if(!title){status.textContent="Le contexte du format est prêt : génération d'un nouveau titre dans l’assistant IA.";alsoSuggestWithAI();return;}
     const list=variants(title);
     if(list.length<=1){status.textContent="Pas de variante locale sûre trouvée. Vérification des propositions IA dans l’assistant.";alsoSuggestWithAI();return;}
     for(const option of list){
