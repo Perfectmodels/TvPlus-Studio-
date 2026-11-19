@@ -202,12 +202,19 @@
       "Aucune erreur couverte par les règles locales. Vérifiez aussi le dictionnaire du navigateur.";
     suggestions.replaceChildren();
   });
+  function alsoSuggestWithAI(){
+    const assistant=window.TVPlusOpenAI;
+    if(!assistant?.run)return;
+    const panel=document.getElementById("tvplusOpenAIPanel");
+    if(panel)panel.open=true;
+    assistant.run("reformulation");
+  }
   $("studioRewriteTitle").addEventListener("click",()=>{
     suggestions.replaceChildren();
     const title=activeInput().value.trim();
     if(!title){status.textContent="Saisissez un titre avant la reformulation.";return;}
     const list=variants(title);
-    if(list.length<=1){status.textContent="Pas de variante sûre trouvée. Le titre reste modifiable.";return;}
+    if(list.length<=1){status.textContent="Pas de variante locale sûre trouvée. Vérification des propositions IA dans l’assistant.";alsoSuggestWithAI();return;}
     for(const option of list){
       const b=document.createElement("button");b.type="button";
       const strong=document.createElement("strong");strong.textContent=option.title;
@@ -215,7 +222,7 @@
       b.append(strong,detail);b.addEventListener("click",()=>{applyTitle(option.title);status.textContent="Titre proposé appliqué. Relisez le sens avant publication.";});
       suggestions.append(b);
     }
-    status.textContent=list.length+" formulations basées sur le titre fourni. Choisissez celle qui convient.";
+    status.textContent=list.length+" propositions locales issues du texte. Des variantes IA sont proposées dans l’assistant, si l’API est disponible.";alsoSuggestWithAI();
   });
   only.addEventListener("input",()=>{if(storedType()){memory[kindNow()]={source:source(),value:only.value};save();renderCaption();}});
   kind.addEventListener("change",updateForm);

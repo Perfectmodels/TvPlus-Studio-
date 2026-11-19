@@ -54,14 +54,19 @@ function source(){return scope.value==="article"?article():scope.value==="captio
 function requestData(name){
  const subject=title(),body=article();
  const needsArticle=["titre_court","resume","angles","seo","article","vigilance"].includes(name);
+ const headlineTask=["titre_court","reformulation","titre_affiche","decryptage"].includes(name);
+ const official=kind.value==="lire"?window.TVPlusAutoArticle?.current?.title:"";
  if(needsArticle&&body.length<80)throw Error("Récupérez d’abord le contenu de l’article (80 caractères minimum).");
  if(!subject&&!body)throw Error("Saisissez un titre ou récupérez le contenu de l’article.");
- return {task:name,title:name==="titre_court"&&window.TVPlusAutoArticle?.current?.title?window.TVPlusAutoArticle.current.title:subject,article:needsArticle?body:(scope.value==="article"?body:source()),
+ // For a headline request, send the ACTUAL article, not merely a duplicate of its title.
+ return {task:name,title:headlineTask&&official?official:subject,
+  article:needsArticle||(headlineTask&&body.length>=80)?body:(scope.value==="article"?body:source()),
   format:kind.value||"lire",tone:$("tvplusAITone").value,language:$("tvplusAILanguage").value};
 }
 function show(result){
  choices.replaceChildren();
- const candidates=[...(result.options||[]),result.title,result.text].filter(x=>typeof x==="string"&&x.trim());
+ const headlineTask=["titre_court","reformulation","titre_affiche","decryptage"].includes(task.value);
+ const candidates=(headlineTask?[result.title,...(result.options||[])]:[result.text,result.title,...(result.options||[])]).filter(x=>typeof x==="string"&&x.trim());
  const unique=[...new Set(candidates)];
  for(const value of unique.slice(0,7)){
   const b=document.createElement("button");b.type="button";b.textContent=value.length>240?value.slice(0,237)+"…":value;
@@ -94,14 +99,18 @@ async function run(name,automatic=false){
   if(automatic){
    const current=window.TVPlusAutoArticle?.current;
    if(!current||current.title!==input.title||kind.value!=="lire")return;
-   const proposed=[...(data.result.options||[]),data.result.title].find(x=>typeof x==="string"&&[...x].length<=75&&x.trim().split(/\s+/).length<=12);
+   const proposed=[data.result.title,...(data.result.options||[])].find(x=>typeof x==="string"&&[...x].length<=75&&x.trim().split(/\s+/).length<=12&&x.trim().toLocaleLowerCase("fr")!==current.title.trim().toLocaleLowerCase("fr"));
    if(proposed){const dest=$("studioCaptionTitle");dest.value=window.TVPlusHeadlineCase?.(proposed)||proposed;dest.dispatchEvent(new Event("input",{bubbles:true}))}
    if(data.result.hashtags?.length){
     const target=$("studioCaptionHashtags");target.value=data.result.hashtags.join(" ");target.dispatchEvent(new Event("input",{bubbles:true}));
    }
    stat.textContent="Titre IA et hashtags appliqués à la légende. La Pastille n’a pas changé.";
   }
- }catch(e){stat.textContent=e.message||"OpenAI indisponible; les outils locaux restent disponibles."}
+ }catch(e){
+  const message=e.message||"OpenAI indisponible.";
+  stat.textContent=message+(automatic?" Le titre provisoire issu de l’article est conservé.":"");
+  if(automatic){const notice=$("studioShortenStatus");if(notice)notice.textContent=message+" Titre provisoire conservé; vous pouvez le modifier manuellement."}
+ }
  finally{busy=false;b.disabled=false}
 }
 $("tvplusAIRun").addEventListener("click",()=>run(task.value));

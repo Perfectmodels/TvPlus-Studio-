@@ -85,7 +85,7 @@ $('aiUniversalRun').addEventListener('click',async()=>{
  const name=task.value, field=contextField(),selected=String(field?.value||'').trim();
  const fromArticle=String($('studioArticleBody')?.value||'').trim(),official=window.TVPlusAutoArticle?.current?.title;
  const title=normalTitle(name==='titre_court'&&official?official:selected||$('headline')?.value||'');
- const body=['titre_court','resume','angles','seo','article','vigilance'].includes(name)?fromArticle:(selected||fromArticle);
+ const body=['titre_court','resume','angles','seo','article','vigilance'].includes(name)||(['reformulation','titre_affiche','decryptage'].includes(name)&&fromArticle.length>=80)?fromArticle:(selected||fromArticle);
  if(name==='photo_description'&&scope.value!=='photo')scope.value='photo';
  if(name!=='photo_description'&&!title&&!body){stat.textContent='Aucun texte à analyser dans ce module.';return}
  if(['titre_court','resume','angles','seo','article','vigilance'].includes(name)&&fromArticle.length<80){stat.textContent='Récupérez d’abord un article complet pour cette analyse.';return}
@@ -99,7 +99,7 @@ $('aiUniversalRun').addEventListener('click',async()=>{
   const payload=await r.json().catch(()=>({}));if(!r.ok)throw Error(payload.error||'Erreur OpenAI.');
   const data=payload.result;last={name,data};
   const titles=['titre_affiche','titre_court','reformulation','decryptage','correction'];
-  const proposals=[...(data.options||[]),data.title,data.text].filter(Boolean).map(s=>titles.includes(name)?normalTitle(s):s);
+  const proposals=(titles.includes(name)?[data.title,...(data.options||[])]:[data.text,data.title,...(data.options||[])]).filter(Boolean).map(s=>titles.includes(name)?normalTitle(s):s);
   const unique=[...new Set(proposals)];choices.replaceChildren();
   for(const value of unique.slice(0,6)){const b=document.createElement('button');b.type='button';b.textContent=value.slice(0,250);b.addEventListener('click',()=>{result.value=value;stat.textContent='Proposition sélectionnée. Vérifiez-la avant de l’appliquer.'});choices.append(b)}
   result.value=unique[0]||data.text||'';

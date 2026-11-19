@@ -27,16 +27,16 @@ function resetLink(){STATE.current=null;source.textContent="";try{localStorage.r
 try{const saved=JSON.parse(localStorage.getItem(KEY)||"null");if(saved&&valid(saved.url)&&saved.title&&saved.body&&saved.shortUrl){STATE.current=saved;input.value=saved.url;source.textContent="Article lié : "+saved.title}}catch(_){}
 function chooseTitle(article){
  const raw=article.title.trim();
- if([...raw].length<=75&&raw.trim().split(/\s+/).length<=12)return {title:raw,review:false};
- try{const list=window.TVPlusFrenchHeadlines?.suggest({headline:raw,article:article.body,maxChars:75,maxWords:12})?.candidates||[];
-  const exact=list.find(x=>!x.needsReview&&[...x.title].length<=75&&x.title.split(/\s+/).length<=12);
-  if(exact)return {title:exact.title,review:false};
-  const fallback=list.find(x=>[...x.title].length<=75&&x.title.split(/\s+/).length<=12);
-  if(fallback)return {title:fallback.title,review:true};
+ const safe=t=>typeof t==="string"&&[...t].length<=75&&t.trim().split(/\s+/).length<=12&&!t.trim().endsWith("…");
+ try{
+  // Even if the original title is short, examine the article and seek a genuinely different passage.
+  const list=window.TVPlusFrenchHeadlines?.suggest({headline:raw,article:article.body,maxChars:75,maxWords:12})?.candidates||[];
+  const derived=list.find(x=>!x.needsReview&&safe(x.title)&&x.title.trim().toLocaleLowerCase("fr")!==raw.toLocaleLowerCase("fr"));
+  if(derived)return {title:derived.title,review:true,source:"extractif"};
  }catch(_){}
- const acc=[];
- for(const term of raw.replace(/francs CFA/gi,"FCFA").split(/\s+/)){const joined=[...acc,term].join(" ");if(joined.length>70||acc.length>=11)break;acc.push(term)}
- return {title:acc.join(" ").replace(/[,;:. ]+$/,"")+"…",review:true};
+ if(safe(raw))return {title:raw,review:false,source:"original"};
+ // Do not present a truncated phrase as a finished journalistic headline.
+ return {title:raw,review:true,source:"original_long"};
 }
 function visibility(){const active=mode.value==="lire";details.hidden=!active;const label=link.closest("label");if(label)label.hidden=active;const intro=$("studioCaptionIntro")?.closest("label");if(intro)intro.hidden=active;}
 mode.addEventListener("input",visibility);mode.addEventListener("change",visibility);visibility();
@@ -66,7 +66,7 @@ button.addEventListener("click",async event=>{
   $("studioGenerateHashtags")?.click();
   const articleTool=$("studioArticleHeadlineTool");if(articleTool)articleTool.open=true;
   source.textContent="Titre officiel de l’article : "+article.title;
-  notify("L’article, le lien court, le titre Facebook et les hashtags sont prêts."+(out.review?" Vérifiez la formulation du titre.":""));
+  notify("Article et lien court récupérés. "+(out.source==="extractif"?"Titre provisoire extrait du contenu, à relire.":"Titre officiel conservé en attendant une reformulation.")+" Les suggestions IA apparaissent dans l’assistant si OpenAI est disponible.");
   document.dispatchEvent(new CustomEvent("tvplus:article-ready",{detail:{url:STATE.current.url,title:STATE.current.title,shortUrl:STATE.current.shortUrl}}));
  }catch(e){notify(e.message||"Impossible de préparer la légende.")}
  finally{button.disabled=false;button.textContent=originalLabel}
