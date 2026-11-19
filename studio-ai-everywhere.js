@@ -52,7 +52,7 @@ const css=document.createElement('style');css.textContent=`
 function contextField(){
  const key=scope.value;
  if(key==='poster'||key==='citation')return $('headline');
- if(key==='facebook')return format()==='lire'?$('studioCaptionTitle'):$('studioOnlyTitleInput')||$('studioCaptionTitle');
+ if(key==='facebook')return format()==='lire'?$('studioCaptionTitle'):window.TVPlusFormatTitles?.getInput(format());
  if(key==='article')return $('studioArticleBody');
  if(key==='caption')return $('studioCaptionPreview');
  if(key==='angle')return $('details');
@@ -83,8 +83,8 @@ let busy=false,last=null;
 $('aiUniversalRun').addEventListener('click',async()=>{
  if(busy)return;
  const name=task.value, field=contextField(),selected=String(field?.value||'').trim();
- const fromArticle=String($('studioArticleBody')?.value||'').trim(),official=window.TVPlusAutoArticle?.current?.title;
- const title=normalTitle(name==='titre_court'&&official?official:selected||$('headline')?.value||'');
+ const fromArticle=format()==='lire'?String($('studioArticleBody')?.value||'').trim():String(window.TVPlusFormatTitles?.getContext(format())||'').trim(),official=window.TVPlusAutoArticle?.current?.title;
+ const title=normalTitle(name==='titre_court'&&format()==='lire'&&official?official:selected||(format()==='lire' ? $('headline')?.value : window.TVPlusFormatTitles?.getTitle(format()))||'');
  const body=['titre_court','resume','angles','seo','article','vigilance'].includes(name)||(['reformulation','titre_affiche','decryptage'].includes(name)&&fromArticle.length>=80)?fromArticle:(selected||fromArticle);
  if(name==='photo_description'&&scope.value!=='photo')scope.value='photo';
  if(name!=='photo_description'&&!title&&!body){stat.textContent='Aucun texte à analyser dans ce module.';return}
@@ -93,14 +93,18 @@ $('aiUniversalRun').addEventListener('click',async()=>{
  try{
   const extra=String($('aiUniversalContext').value||'').trim();
   const photo=name==='photo_description'?posterImage():undefined;
-  const req={task:name,title,article:(body+(extra?'\nContexte communiqué par le journaliste : '+extra:'')).slice(0,12000),format:format(),tone:'journalistique',language:'fr'};
+  const requestFormat=format();
+  const req={task:name,title,article:(body+(extra?'\nContexte communiqué par le journaliste : '+extra:'')).slice(0,12000),format:requestFormat,tone:'journalistique',language:'fr'};
   if(photo)req.image=photo;
   const r=await fetch('/api/editorial-ai',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(req),cache:'no-store'});
   const payload=await r.json().catch(()=>({}));if(!r.ok)throw Error(payload.error||'Erreur OpenAI.');
-  const data=payload.result;last={name,data};
+  const data=payload.result;
+   if(format()!==requestFormat){stat.textContent='Le format a changé pendant la génération. Relancez pour le format actif.';return;}
+   last={name,data,format:requestFormat};
   const titles=['titre_affiche','titre_court','reformulation','decryptage','correction'];
   const proposals=(titles.includes(name)?[data.title,...(data.options||[])]:[data.text,data.title,...(data.options||[])]).filter(Boolean).map(s=>titles.includes(name)?normalTitle(s):s);
-  const unique=[...new Set(proposals)];choices.replaceChildren();
+  const unique=[...new Set(proposals)].filter(x=>requestFormat!=='60secondes'||!titles.includes(name)||([...x].length<=75&&x.trim().split(/\s+/).length<=12));choices.replaceChildren();
+   if(!unique.length)throw Error('Aucun titre conforme à la limite du format En 60 secondes. Réessayez.');
   for(const value of unique.slice(0,6)){const b=document.createElement('button');b.type='button';b.textContent=value.slice(0,250);b.addEventListener('click',()=>{result.value=value;stat.textContent='Proposition sélectionnée. Vérifiez-la avant de l’appliquer.'});choices.append(b)}
   result.value=unique[0]||data.text||'';
   stat.textContent=(data.issues||[]).length?'Points à vérifier : '+data.issues.slice(0,3).join(' · '):'Proposition disponible. Vérification rédactionnelle nécessaire.';
@@ -108,6 +112,7 @@ $('aiUniversalRun').addEventListener('click',async()=>{
  finally{busy=false;$('aiUniversalRun').disabled=false}
 });
 $('aiUniversalApply').addEventListener('click',()=>{
+ if(last?.format&&last.format!==format()){stat.textContent='Cette proposition appartient à un autre format. Générez-en une nouvelle.';return}
  const field=contextField();if(!field){stat.textContent='Sélectionnez un module texte pour appliquer la proposition.';return}
  if(!result.value.trim())return;
  field.value=['titre_affiche','titre_court','reformulation','decryptage'].includes(last?.name)?normalTitle(result.value):result.value;
@@ -122,7 +127,9 @@ function buttonAfter(id,label,s,t){
 }
 buttonAfter('headline','Assistant IA : améliorer le titre','poster','titre_affiche');
 buttonAfter('studioCaptionTitle','Assistant IA : légende et titres','facebook','titre_court');
-buttonAfter('studioOnlyTitleInput','Assistant IA : reformuler','facebook','reformulation');
+buttonAfter('studioOnlyTitleInput','IA · titre du reportage','facebook','reformulation');
+buttonAfter('studio60TitleInput','IA · titre en 60 secondes','facebook','reformulation');
+buttonAfter('studioAlertTitleInput','IA · titre de l’alerte','facebook','reformulation');
 buttonAfter('studioArticleBody','Assistant IA : améliorer le contenu','article','article');
 buttonAfter('details','Assistant IA : analyser l’angle','angle','decryptage');
 const quality=document.querySelector('[data-toolpanel="quality"]');if(quality){
