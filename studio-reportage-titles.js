@@ -24,15 +24,31 @@
   const form=document.createElement("section");form.className="studio-title-only-box";form.id="studioFormatOnlyTitle";
   form.hidden=true;
   form.innerHTML=`
-    <label for="studioOnlyTitleInput"><strong id="studioOnlyTitleLabel">Titre du reportage</strong>
-      <textarea id="studioOnlyTitleInput" rows="3" maxlength="500" lang="fr" spellcheck="true" placeholder="Titre du reportage…"></textarea>
-    </label>
-    <p class="studio-note" id="studioOnlyTitleDescription">Pour un reportage, seul le titre est à saisir. WhatsApp et hashtags sont ajoutés automatiquement.</p>`;
+    <div class="tvplus-format-fields" data-format-title="reportage" hidden>
+      <strong>Reportage · titre de terrain</strong>
+      <label>Titre du reportage<textarea id="studioOnlyTitleInput" rows="3" maxlength="500" lang="fr" spellcheck="true" placeholder="Titre propre au reportage"></textarea></label>
+      <label>Contexte et angle du reportage<textarea id="studioReportageBrief" rows="3" maxlength="3000" placeholder="Faits, protagonistes et angle du terrain (facultatif)"></textarea></label>
+      <p class="studio-note">Titre de reportage développé, distinct de la capsule 60 secondes.</p>
+    </div>
+    <div class="tvplus-format-fields" data-format-title="60secondes" hidden>
+      <strong>En 60 secondes · titre court</strong>
+      <label>Titre de la capsule<textarea id="studio60TitleInput" rows="2" maxlength="500" lang="fr" spellcheck="true" placeholder="Un fait principal, en une phrase courte"></textarea></label>
+      <label>Informations essentielles<textarea id="studio60Brief" rows="3" maxlength="3000" placeholder="Ce que le public doit retenir en 60 secondes (facultatif)"></textarea></label>
+      <p class="studio-note" id="studio60TitleCounter" role="status">75 caractères et 12 mots maximum.</p>
+    </div>
+    <div class="tvplus-format-fields" data-format-title="alerte" hidden>
+      <strong>Alerte Info · titre factuel</strong>
+      <label>Titre de l'alerte<textarea id="studioAlertTitleInput" rows="2" maxlength="500" lang="fr" spellcheck="true" placeholder="Fait important confirmé"></textarea></label>
+      <label>Éléments vérifiés<textarea id="studioAlertBrief" rows="3" maxlength="3000" placeholder="Préciser seulement les faits confirmés (facultatif)"></textarea></label>
+    </div>
+    <button type="button" id="studioUsePosterTitle">Reprendre le titre de l'affiche pour ce format</button>
+    <p class="studio-note" id="studioOnlyTitleDescription">Chaque format possède son propre brouillon.</p>`;
   grid.insertAdjacentElement("afterend",form);
   form.insertAdjacentElement("afterend",rewrite);
   captionTitle.setAttribute("lang","fr");
   captionTitle.setAttribute("spellcheck","true");
-  const only=$("studioOnlyTitleInput"),status=$("studioProofreadingStatus"),suggestions=$("studioRewriteSuggestions");
+  const formatFields={reportage:{title:$("studioOnlyTitleInput"),brief:$("studioReportageBrief")}, "60secondes":{title:$("studio60TitleInput"),brief:$("studio60Brief")},alerte:{title:$("studioAlertTitleInput"),brief:$("studioAlertBrief")}};
+  const status=$("studioProofreadingStatus"),suggestions=$("studioRewriteSuggestions");
   const oldTitleBox=$("studioCaptionTitleBlock"),shortener=$("studioShortenerPanel"),articlePanel=$("studioArticleHeadlineTool");
   const KEY="tvplus:format-caption-title-v1";
   let memory={};
@@ -40,8 +56,10 @@
   const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(memory))}catch(_){}};
   const source=()=>String(original.value||"").trim();
   const kindNow=()=>kind.value||"lire";
-  const activeInput=()=>kindNow()==="lire"?captionTitle:only;
-  const storedType=()=>["reportage","alerte","60secondes"].includes(kindNow());
+  const activeInput=()=>kindNow()==="lire"?captionTitle:formatFields[kindNow()]?.title;
+  const storedType=()=>Boolean(formatFields[kindNow()]);
+  function length60(){const t=formatFields["60secondes"].title.value.trim(),chars=[...t].length,words=t?t.split(/\s+/).length:0;
+   const over=chars>75||words>12,n=$("studio60TitleCounter");n.textContent=chars+"/75 caractères · "+words+"/12 mots"+(over?" · À raccourcir avant de copier.":"");n.classList.toggle("is-warning",over);return over;}
   const heading={
     reportage:"📺 𝗧𝗩+ | 𝗥𝗘𝗣𝗢𝗥𝗧𝗔𝗚𝗘",
     alerte:"🚨 𝗧𝗩+ | 𝗔𝗟𝗘𝗥𝗧𝗘 𝗜𝗡𝗙𝗢",
@@ -76,40 +94,39 @@
   function renderCaption(){
     const type=kindNow();
     if(type==="lire")return;
-    const title=only.value.trim()||"[Titre du reportage à compléter]";
+    const title=activeInput().value.trim()||"[Titre "+(type==="60secondes"?"du 60 secondes":type==="alerte"?"de l'alerte":"du reportage")+" à compléter]";
+    if(type==="60secondes")length60();
     const lines=[heading[type]||heading.reportage];
     if(type==="alerte")lines.push("");
     lines.push("🔴 "+unicodeBold(title),wa,"",hashtags(title,type));
     preview.value=lines.join("\n");
   }
   function seed(){
-    const type=kindNow();
-    if(type==="lire")return;
-    const title=source();
-    if(!memory[type]||memory[type].source!==title)memory[type]={source:title,value:title};
-    only.value=memory[type].value;
+    const type=kindNow();if(!storedType())return;
+    const poster=source();
+    if(!memory[type]||memory[type].source!==poster)memory[type]={source:poster,value:"",brief:""};
+    formatFields[type].title.value=String(memory[type].value||"");
+    formatFields[type].brief.value=String(memory[type].brief||"");
     save();
   }
+  function saveActive(){
+    const type=kindNow();if(!storedType())return;
+    memory[type]={source:source(),value:formatFields[type].title.value,brief:formatFields[type].brief.value};
+    save();renderCaption();
+  }
   function updateForm(){
-    const type=kindNow(),simple=type!=="lire",reportage=type==="reportage";
+    const type=kindNow(),simple=storedType();
     form.hidden=!simple;
-    if(simple){
-      seed();
-      $("studioOnlyTitleLabel").textContent=labels[type]||"Titre de la publication";
-      $("studioOnlyTitleDescription").textContent=reportage?
-        "Seul le titre est à saisir. Les informations WhatsApp et les hashtags sont ajoutés automatiquement.":
-        "Le titre de la légende est modifiable sans changer celui de l’affiche.";
-    }
+    for(const node of form.querySelectorAll("[data-format-title]"))node.hidden=node.dataset.formatTitle!==type;
+    if(simple){seed();$("studioOnlyTitleDescription").textContent=labels[type]+" · titre et contexte indépendants des autres formats.";}
     if(existing.link)existing.link.hidden=simple;
-    if(existing.intro)existing.intro.hidden=reportage;
-    if(existing.hashtags)existing.hashtags.hidden=reportage;
+    if(existing.intro)existing.intro.hidden=simple;
+    if(existing.hashtags)existing.hashtags.hidden=simple;
     if(oldTitleBox)oldTitleBox.hidden=simple;
     if(shortener)shortener.hidden=simple;
     if(articlePanel)articlePanel.hidden=simple;
     grid.style.gridTemplateColumns=simple?"1fr":"";
-    suggestions.replaceChildren();
-    status.textContent="";
-    renderCaption();
+    suggestions.replaceChildren();status.textContent="";renderCaption();
   }
   const commonErrors=new Map([
     ["reporatge","reportage"],["reporttage","reportage"],["imersion","immersion"],
@@ -166,18 +183,22 @@
         for(const x of p.candidates||[])if(!x.needsReview)add(x.title,"Extrait de l’article · à vérifier");
       }catch(_){}
     }
-    return result.slice(0,4);
+    return result.filter(x=>kindNow()!=="60secondes"||([ ...x.title ].length<=75&&x.title.split(/\s+/).length<=12&&!x.title.endsWith("…"))).slice(0,4);
   }
   function applyTitle(value){
     const input=activeInput();
     input.value=value;
     if(kindNow()==="lire")input.dispatchEvent(new Event("input",{bubbles:true}));
-    else{memory[kindNow()]={source:source(),value:input.value};save();renderCaption();}
+    else saveActive();
     input.focus();
   }
   const css=document.createElement("style");css.id="studio-reportage-titles-style";
   css.textContent=`
-#studioFormatOnlyTitle[hidden],#studioFrenchTitleAssist[hidden]{display:none!important}
+#studioFormatOnlyTitle[hidden],#studioFrenchTitleAssist[hidden],.tvplus-format-fields[hidden]{display:none!important}
+.tvplus-format-fields{display:grid;gap:10px}.tvplus-format-fields>strong{font-size:13px;color:#ffcf57}
+.tvplus-format-fields label{display:grid;gap:6px;font-size:12px}.tvplus-format-fields textarea{box-sizing:border-box;width:100%;border:1px solid #506b87;border-radius:8px;padding:10px;background:#0d1d31;color:#fff}
+#studioUsePosterTitle{margin:10px 0;border:1px solid #53728d;background:#223b57;color:#fff;border-radius:8px;padding:10px;cursor:pointer}
+#studio60TitleCounter.is-warning{color:#ffbd70;font-weight:750}
 .studio-title-only-box{background:#132741;border:1px solid #405a77;border-radius:10px;padding:12px;margin:11px 0}
 .studio-title-only-box label{display:block;color:#eaf3ff;font-size:12px}
 .studio-title-only-box textarea{width:100%;min-height:86px;line-height:1.5;resize:vertical;margin-top:8px}
@@ -224,20 +245,42 @@
     }
     status.textContent=list.length+" propositions locales issues du texte. Des variantes IA sont proposées dans l’assistant, si l’API est disponible.";alsoSuggestWithAI();
   });
-  only.addEventListener("input",()=>{if(storedType()){memory[kindNow()]={source:source(),value:only.value};save();renderCaption();}});
+  for(const [type,obj] of Object.entries(formatFields)){
+    for(const field of [obj.title,obj.brief])field.addEventListener("input",()=>{if(kindNow()===type)saveActive();});
+  }
+  $("studioUsePosterTitle").addEventListener("click",()=>{
+    if(!storedType())return;
+    activeInput().value=source();saveActive();activeInput().focus();
+    status.textContent="Le titre de l'affiche a été repris uniquement pour "+labels[kindNow()]+".";
+  });
   kind.addEventListener("change",updateForm);
   kind.addEventListener("input",updateForm);
   $("studioCaptionRefresh")?.addEventListener("click",()=>{
-    if(storedType()){memory[kindNow()]={source:source(),value:source()};save();only.value=source();renderCaption();}
+    if(storedType()){activeInput().value=source();saveActive();}
   });
   // Update the preview before the inherited copy handler reads its value.
   const copy=$("studioCaptionCopy");
   if(copy){
-    copy.addEventListener("click",renderCaption,true);
+    copy.addEventListener("click",event=>{
+      if(!storedType())return;
+      renderCaption();
+      if(!activeInput().value.trim()||(kindNow()==="60secondes"&&length60())){
+        event.preventDefault();event.stopImmediatePropagation();
+        $("studioCaptionStatus").textContent=activeInput().value.trim()?"Titre du 60 secondes trop long : maximum 75 caractères et 12 mots.":"Saisissez le titre propre à ce format avant de copier.";
+        activeInput().focus();
+      }
+    },true);
     copy.addEventListener("pointerdown",renderCaption,true);
   }
   const originalShow=editorial.show;
   editorial.show=function(page){originalShow(page);if(page==="caption")updateForm();};
   updateForm();
-  window.TVPlusTitleTools={proofread,variants,refresh:updateForm,version:"1.0"};
+  window.TVPlusFormatTitles={
+    getTitle:type=>String(formatFields[type]?.title.value||"").trim(),
+    getInput:type=>formatFields[type]?.title||null,
+    getContext:type=>String(formatFields[type]?.brief.value||"").trim(),
+    renderCaption:()=>{if(!storedType())return false;renderCaption();return true;},
+    getCurrentFormat:kindNow
+  };
+  window.TVPlusTitleTools={proofread,variants,refresh:updateForm,version:"2.0"};
 })();
