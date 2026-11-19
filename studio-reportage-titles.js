@@ -119,6 +119,8 @@
     form.hidden=!simple;
     for(const node of form.querySelectorAll("[data-format-title]"))node.hidden=node.dataset.formatTitle!==type;
     if(simple){seed();$("studioOnlyTitleDescription").textContent=labels[type]+" · titre et contexte indépendants des autres formats.";}
+    rewrite.querySelector(".studio-title-assist-head strong").textContent=type==="60secondes"?"Titres courts · En 60 secondes":type==="reportage"?"Titres journalistiques · Reportage":type==="alerte"?"Titres factuels · Alerte Info":"Correction et reformulation du titre";
+    $("studioRewriteTitle").textContent=type==="60secondes"?"Générer des titres pour le 60 secondes":type==="reportage"?"Générer des titres de reportage":type==="alerte"?"Générer des titres d’alerte":"Proposer des reformulations";
     if(existing.link)existing.link.hidden=simple;
     if(existing.intro)existing.intro.hidden=simple;
     if(existing.hashtags)existing.hashtags.hidden=simple;
