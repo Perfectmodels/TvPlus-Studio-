@@ -742,7 +742,16 @@ $('verbatimCenter').addEventListener('click',()=>{state.dx=0;state.dy=0;draw();}
 const detailsField=makeField('details','Question ou angle du décryptage','textarea','');
 const speakerField=makeField('speaker','Auteur de la citation','input','');
 const roleField=makeField('role','Fonction de l’auteur','input','');
-$('highlightArea').before(detailsField,speakerField,roleField);
+const textPositionDefaults={quoteX:76,quoteY:290,quoteW:760,authorX:104,authorY:972,roleX:105,roleY:1025};
+let textPosition={...textPositionDefaults};
+const textPositionField=document.createElement('details');textPositionField.className='field';textPositionField.hidden=true;textPositionField.style.cssText='padding:12px;border:1px solid #48647f;border-radius:10px';
+const positionControls=[['quoteX','Citation — horizontal',40,1000],['quoteY','Citation — vertical',150,1000],['quoteW','Largeur de la citation',180,1120],['authorX','Auteur — horizontal',40,1000],['authorY','Auteur — vertical',40,1100],['roleX','Fonction — horizontal',40,1000],['roleY','Fonction — vertical',40,1120]];
+textPositionField.innerHTML='<summary style="cursor:pointer;font-weight:700">Position des textes</summary>'+positionControls.map(([key,label,min,max])=>`<label class="field-label" for="vt-${key}" style="margin-top:10px">${label}</label><div class="range-row"><input type="range" id="vt-${key}" min="${min}" max="${max}" step="1" value="${textPosition[key]}"><output id="vt-${key}-out">${textPosition[key]} px</output></div>`).join('')+'<button type="button" class="ghost mini-btn" id="vt-reset">Réinitialiser les textes</button>';
+
+function syncTextPosition(){for(const [key] of positionControls){$('vt-'+key).value=String(textPosition[key]);$('vt-'+key+'-out').textContent=textPosition[key]+' px';}}
+for(const [key] of positionControls)textPositionField.querySelector('#vt-'+key).addEventListener('input',e=>{textPosition[key]=Number(e.target.value);syncTextPosition();draw();});
+textPositionField.querySelector('#vt-reset').addEventListener('click',()=>{textPosition={...textPositionDefaults};syncTextPosition();draw();});
+$('highlightArea').before(detailsField,speakerField,roleField,textPositionField);
 const css=document.createElement('style');css.textContent=`
 .mode-switch.four-modes{grid-template-columns:repeat(2,minmax(0,1fr))}
 .mode-switch.four-modes .mode-btn{min-height:34px}
@@ -841,12 +850,12 @@ function drawVerbatim(){
  // More contrast beneath the quote without crushing a contributor’s face.
  const opacity=Math.max(0,Math.min(1,Number(state.darkness)/100));
  const grad=ctx.createLinearGradient(0,320,0,H);grad.addColorStop(0,'rgba(7,12,32,0)');grad.addColorStop(.45,`rgba(3,5,28,${opacity*.55})`);grad.addColorStop(1,`rgba(3,5,28,${opacity})`);ctx.fillStyle=grad;ctx.fillRect(0,320,W,880);
- ctx.fillStyle='#fff';ctx.font='900 225px Georgia,serif';ctx.textAlign='left';ctx.textBaseline='alphabetic';ctx.fillText('“',65,261);
- const q=fitStyledHeadline(state.headline||'Saisissez votre citation ici.',76,290,760,635,56,'#ffffff'); // Colonne gauche, portrait dégagé à droite
- fitParagraph(speakerText||'Nom de l’auteur',104,972,730,47,35,900,'#ffffff',1.06);
- fitParagraph((roleText||'FONCTION').toUpperCase(),105,1025,720,37,28,400,'#ffffff',1.0);
- ctx.fillStyle='#ed1820';ctx.fillRect(105,1090,735,5);
- ctx.save();ctx.translate(80,1093);ctx.rotate(Math.PI/4);ctx.fillRect(-17,-17,34,34);ctx.restore();
+ ctx.fillStyle='#fff';ctx.font='900 225px Georgia,serif';ctx.textAlign='left';ctx.textBaseline='alphabetic';ctx.fillText('“',textPosition.quoteX-11,textPosition.quoteY-29);
+ const q=fitStyledHeadline(state.headline||'Saisissez votre citation ici.',textPosition.quoteX,textPosition.quoteY,Math.min(textPosition.quoteW,1160-textPosition.quoteX),Math.max(30,Math.min(925,textPosition.authorY-47)-textPosition.quoteY),56,'#ffffff'); // Colonne gauche, portrait dégagé à droite
+ fitParagraph(speakerText||'Nom de l’auteur',textPosition.authorX,textPosition.authorY,Math.min(730,1160-textPosition.authorX),47,35,900,'#ffffff',1.06);
+ fitParagraph((roleText||'FONCTION').toUpperCase(),textPosition.roleX,textPosition.roleY,Math.min(720,1160-textPosition.roleX),37,28,400,'#ffffff',1.0);
+ ctx.fillStyle='#ed1820';ctx.fillRect(textPosition.roleX,Math.min(1160,textPosition.roleY+65),Math.min(735,1160-textPosition.roleX),5);
+ ctx.save();ctx.translate(textPosition.roleX-25,Math.min(1160,textPosition.roleY+65)+3);ctx.rotate(Math.PI/4);ctx.fillRect(-17,-17,34,34);ctx.restore();
  drawLogoBox(920,980,229,175);
  return {size:Math.round(q.size),kind:'verbatim'};
 }
@@ -867,8 +876,8 @@ draw=function(){if(addedModes.includes(state.mode))drawNew();else{
  if(poster.width!==1200||poster.height!==1200){poster.width=1200;poster.height=1200;}
  $('canvasShell').classList.remove('is-wide','is-portrait');poster.style.aspectRatio='1 / 1';preexistingDraw();
 }};
-function storeCurrent(){drafts[state.mode]={headline:state.headline,category:state.category,details:detailText,speaker:speakerText,role:roleText,image:state.image,sample:state.sample,darkness:state.darkness,zoom:state.zoom,dx:state.dx,dy:state.dy,lineHeight:state.lineHeight,letterSpacing:state.letterSpacing,widthPercent:state.widthPercent,highlightedIndices:new Set(state.highlightedIndices),wordSizes:new Map(state.wordSizes)};}
-function restoreMode(mode){const d=drafts[mode]||defaults[mode];state.headline=d.headline||'';setCategoryValue(d.category||'');detailText=d.details||'';speakerText=d.speaker||'';roleText=d.role||'';state.image=d.image===undefined?state.image:d.image;state.sample=d.sample===undefined?true:d.sample;state.darkness=Number.isFinite(d.darkness)?d.darkness:70;$('darkness').value=state.darkness;$('darknessLabel').textContent=state.darkness+' %';state.zoom=d.zoom||100;state.dx=d.dx||0;state.dy=d.dy||0;state.lineHeight=Number(d.lineHeight)||1.16;state.letterSpacing=Number(d.letterSpacing)||0;state.widthPercent=Number(d.widthPercent)||100;syncPastilleSpacing();state.highlightedIndices=new Set(d.highlightedIndices||[]);state.wordSizes=new Map(d.wordSizes||[]);state.sizeSelection.clear();
+function storeCurrent(){drafts[state.mode]={headline:state.headline,category:state.category,details:detailText,speaker:speakerText,role:roleText,textPosition:{...textPosition},image:state.image,sample:state.sample,darkness:state.darkness,zoom:state.zoom,dx:state.dx,dy:state.dy,lineHeight:state.lineHeight,letterSpacing:state.letterSpacing,widthPercent:state.widthPercent,highlightedIndices:new Set(state.highlightedIndices),wordSizes:new Map(state.wordSizes)};}
+function restoreMode(mode){const d=drafts[mode]||defaults[mode];state.headline=d.headline||'';setCategoryValue(d.category||'');detailText=d.details||'';speakerText=d.speaker||'';roleText=d.role||'';textPosition={...textPositionDefaults,...d.textPosition};syncTextPosition();state.image=d.image===undefined?state.image:d.image;state.sample=d.sample===undefined?true:d.sample;state.darkness=Number.isFinite(d.darkness)?d.darkness:70;$('darkness').value=state.darkness;$('darknessLabel').textContent=state.darkness+' %';state.zoom=d.zoom||100;state.dx=d.dx||0;state.dy=d.dy||0;state.lineHeight=Number(d.lineHeight)||1.16;state.letterSpacing=Number(d.letterSpacing)||0;state.widthPercent=Number(d.widthPercent)||100;syncPastilleSpacing();state.highlightedIndices=new Set(d.highlightedIndices||[]);state.wordSizes=new Map(d.wordSizes||[]);state.sizeSelection.clear();
  $('headline').value=state.headline;$('details').value=detailText;$('speaker').value=speakerText;$('role').value=roleText;
  $('zoom').value=state.zoom;$('zoomLabel').textContent=state.zoom+' %';$('photoName').textContent=state.sample?'Photo à importer':'Photo personnalisée';
 }
@@ -878,7 +887,7 @@ updateMode=function(mode){if(mode===state.mode)return;if(!defaults[mode])return;
  const b=$(id+'Btn');if(b){b.classList.toggle('active',id===mode);b.classList.toggle('alert',id===mode&&mode==='alerte');b.classList.toggle('blue',id===mode&&mode==='decryptage');b.classList.toggle('quote',id===mode&&mode==='verbatim');b.setAttribute('aria-pressed',String(id===mode));}
  }
  $('categoryField').hidden=!(mode==='pastille'||mode==='decryptage');$('pastilleSpacingField').hidden=mode!=='pastille';$('headline').maxLength=1800;
- framingField.hidden=mode!=='verbatim';$('darkness').closest('.field').querySelector('label').textContent=mode==='verbatim'?'Opacité du dégradé':'Assombrissement de l’image';
+ textPositionField.hidden=mode!=='verbatim';framingField.hidden=mode!=='verbatim';$('darkness').closest('.field').querySelector('label').textContent=mode==='verbatim'?'Opacité du dégradé':'Assombrissement de l’image';
  detailsField.hidden=mode!=='decryptage';speakerField.hidden=mode!=='verbatim';roleField.hidden=mode!=='verbatim';
  $('highlightArea').hidden=mode==='caalors'||mode==='sondage';
  $('downloadBtn').classList.toggle('alertExport',mode==='alerte');
