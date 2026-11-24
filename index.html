@@ -690,7 +690,7 @@ $('clearWordSizes').addEventListener('click',()=>{state.wordSizes.clear();syncSi
 const selectHeadlineWords=()=>{if(state.tool!=='size')return;const ta=$('headline'),start=ta.selectionStart,end=ta.selectionEnd;if(end<=start)return;const hits=splitWordsWithPositions(state.headline).filter(w=>w.start<end&&w.end>start);state.sizeSelection=new Set(hits.map(w=>w.index));syncSizeControls();renderTokens();};
 $('headline').addEventListener('select',selectHeadlineWords);
 $('headline').addEventListener('keyup',selectHeadlineWords);
-$('photoInput').addEventListener('change',e=>loadFile(e.target.files[0],(img,name)=>{state.image=img;state.sample=false;state.zoom=100;state.dx=0;state.dy=0;$('zoom').value='100';$('zoomLabel').textContent='100 %';$('photoName').textContent=name;draw();}));
+$('photoInput').addEventListener('change',e=>{const file=e.target.files[0];e.target.value='';loadFile(file,(img,name)=>{state.image=img;state.sample=false;state.zoom=100;state.dx=0;state.dy=0;$('zoom').value='100';$('zoomLabel').textContent='100 %';$('photoName').textContent=name;draw();});});
 $('logoInput').addEventListener('change',e=>loadFile(e.target.files[0],(img,name)=>{state.logo=img;$('logoName').textContent=name;draw();}));
 $('resetPhoto').addEventListener('click',async()=>{state.image=await loadImage(SAMPLE_PHOTO);state.sample=true;state.zoom=100;state.dx=0;state.dy=0;$('zoom').value=100;$('zoomLabel').textContent='100 %';$('photoName').textContent="Photo d'exemple fournie";draw();});
 $('resetLogo').addEventListener('click',async()=>{state.logo=await loadImage(DEFAULT_LOGO);$('logoName').textContent='Logo extrait du modèle fourni';draw();});
@@ -721,7 +721,7 @@ const defaults={
   caalors:{headline:'Une ville-forêt à Libreville ?',category:'',details:'',speaker:'',role:'',image:null,sample:true},
   sondage:{headline:'Votre avis compte',category:'',details:'',speaker:'',role:'',image:null,sample:true}
 };
-const drafts={pastille:{...initialState,...defaults.pastille},alerte:{...defaults.alerte},decryptage:{...defaults.decryptage},verbatim:{...defaults.verbatim},caalors:{...defaults.caalors},sondage:{...defaults.sondage}};
+const drafts={pastille:{...initialState,...defaults.pastille},alerte:{...defaults.alerte},decryptage:{...defaults.decryptage},verbatim:{...defaults.verbatim,image:null,sample:true,darkness:70},caalors:{...defaults.caalors},sondage:{...defaults.sondage}};
 let detailText='',speakerText='',roleText='';
 const switcher=document.querySelector('.mode-switch');
 switcher.classList.add('four-modes');
@@ -736,6 +736,9 @@ function makeField(id,label,tag,value){
  if(tag==='textarea'){el.rows=3;el.style.minHeight='76px';el.style.height='86px';el.maxLength=1800;}else{el.maxLength=150;}
  div.append(lab,el);return div;
 }
+const framingField=document.createElement('div');framingField.className='field';framingField.hidden=true;framingField.innerHTML='<label class="field-label" for="verbatimX">Position horizontale</label><div class="range-row"><input id="verbatimX" type="range" min="-1200" max="1200" step="5" value="0"><output id="verbatimXLabel">0 px</output></div><label class="field-label" for="verbatimY">Position verticale</label><div class="range-row"><input id="verbatimY" type="range" min="-1200" max="1200" step="5" value="0"><output id="verbatimYLabel">0 px</output></div><button type="button" class="ghost mini-btn" id="verbatimCenter">Centrer la photo</button>';$('zoom').closest('.field').after(framingField);
+for(const [id,key] of [['verbatimX','dx'],['verbatimY','dy']]) $(id).addEventListener('input',e=>{state[key]=Number(e.target.value);draw();});
+$('verbatimCenter').addEventListener('click',()=>{state.dx=0;state.dy=0;draw();});
 const detailsField=makeField('details','Question ou angle du décryptage','textarea','');
 const speakerField=makeField('speaker','Auteur de la citation','input','');
 const roleField=makeField('role','Fonction de l’auteur','input','');
@@ -833,10 +836,11 @@ function drawDecryptage(){
  return {size:Math.round(h.size),kind:'decryptage'};
 }
 function drawVerbatim(){
+ for(const [id,key] of [['verbatimX','dx'],['verbatimY','dy']]){$(id).value=String(state[key]);$(id+'Label').textContent=Math.round(state[key])+' px';}
  const W=1200,H=1200;photoBackdrop(W,H);
  // More contrast beneath the quote without crushing a contributor’s face.
- ctx.fillStyle=`rgba(3,6,17,${(0.48+state.darkness*.004).toFixed(3)})`;ctx.fillRect(0,0,W,H);
- const grad=ctx.createLinearGradient(0,320,0,H);grad.addColorStop(0,'rgba(7,12,32,0.03)');grad.addColorStop(1,'rgba(3,5,28,.98)');ctx.fillStyle=grad;ctx.fillRect(0,320,W,880);
+ const opacity=Math.max(0,Math.min(1,Number(state.darkness)/100));
+ const grad=ctx.createLinearGradient(0,320,0,H);grad.addColorStop(0,'rgba(7,12,32,0)');grad.addColorStop(.45,`rgba(3,5,28,${opacity*.55})`);grad.addColorStop(1,`rgba(3,5,28,${opacity})`);ctx.fillStyle=grad;ctx.fillRect(0,320,W,880);
  ctx.fillStyle='#fff';ctx.font='900 225px Georgia,serif';ctx.textAlign='left';ctx.textBaseline='alphabetic';ctx.fillText('“',65,261);
  const q=fitStyledHeadline(state.headline||'Saisissez votre citation ici.',76,290,760,635,56,'#ffffff'); // Colonne gauche, portrait dégagé à droite
  fitParagraph(speakerText||'Nom de l’auteur',104,972,730,47,35,900,'#ffffff',1.06);
@@ -863,8 +867,8 @@ draw=function(){if(addedModes.includes(state.mode))drawNew();else{
  if(poster.width!==1200||poster.height!==1200){poster.width=1200;poster.height=1200;}
  $('canvasShell').classList.remove('is-wide','is-portrait');poster.style.aspectRatio='1 / 1';preexistingDraw();
 }};
-function storeCurrent(){drafts[state.mode]={headline:state.headline,category:state.category,details:detailText,speaker:speakerText,role:roleText,image:state.image,sample:state.sample,zoom:state.zoom,dx:state.dx,dy:state.dy,lineHeight:state.lineHeight,letterSpacing:state.letterSpacing,widthPercent:state.widthPercent,highlightedIndices:new Set(state.highlightedIndices),wordSizes:new Map(state.wordSizes)};}
-function restoreMode(mode){const d=drafts[mode]||defaults[mode];state.headline=d.headline||'';setCategoryValue(d.category||'');detailText=d.details||'';speakerText=d.speaker||'';roleText=d.role||'';state.image=d.image===undefined?state.image:d.image;state.sample=d.sample===undefined?true:d.sample;state.zoom=d.zoom||100;state.dx=d.dx||0;state.dy=d.dy||0;state.lineHeight=Number(d.lineHeight)||1.16;state.letterSpacing=Number(d.letterSpacing)||0;state.widthPercent=Number(d.widthPercent)||100;syncPastilleSpacing();state.highlightedIndices=new Set(d.highlightedIndices||[]);state.wordSizes=new Map(d.wordSizes||[]);state.sizeSelection.clear();
+function storeCurrent(){drafts[state.mode]={headline:state.headline,category:state.category,details:detailText,speaker:speakerText,role:roleText,image:state.image,sample:state.sample,darkness:state.darkness,zoom:state.zoom,dx:state.dx,dy:state.dy,lineHeight:state.lineHeight,letterSpacing:state.letterSpacing,widthPercent:state.widthPercent,highlightedIndices:new Set(state.highlightedIndices),wordSizes:new Map(state.wordSizes)};}
+function restoreMode(mode){const d=drafts[mode]||defaults[mode];state.headline=d.headline||'';setCategoryValue(d.category||'');detailText=d.details||'';speakerText=d.speaker||'';roleText=d.role||'';state.image=d.image===undefined?state.image:d.image;state.sample=d.sample===undefined?true:d.sample;state.darkness=Number.isFinite(d.darkness)?d.darkness:70;$('darkness').value=state.darkness;$('darknessLabel').textContent=state.darkness+' %';state.zoom=d.zoom||100;state.dx=d.dx||0;state.dy=d.dy||0;state.lineHeight=Number(d.lineHeight)||1.16;state.letterSpacing=Number(d.letterSpacing)||0;state.widthPercent=Number(d.widthPercent)||100;syncPastilleSpacing();state.highlightedIndices=new Set(d.highlightedIndices||[]);state.wordSizes=new Map(d.wordSizes||[]);state.sizeSelection.clear();
  $('headline').value=state.headline;$('details').value=detailText;$('speaker').value=speakerText;$('role').value=roleText;
  $('zoom').value=state.zoom;$('zoomLabel').textContent=state.zoom+' %';$('photoName').textContent=state.sample?'Photo à importer':'Photo personnalisée';
 }
@@ -874,6 +878,7 @@ updateMode=function(mode){if(mode===state.mode)return;if(!defaults[mode])return;
  const b=$(id+'Btn');if(b){b.classList.toggle('active',id===mode);b.classList.toggle('alert',id===mode&&mode==='alerte');b.classList.toggle('blue',id===mode&&mode==='decryptage');b.classList.toggle('quote',id===mode&&mode==='verbatim');b.setAttribute('aria-pressed',String(id===mode));}
  }
  $('categoryField').hidden=!(mode==='pastille'||mode==='decryptage');$('pastilleSpacingField').hidden=mode!=='pastille';$('headline').maxLength=1800;
+ framingField.hidden=mode!=='verbatim';$('darkness').closest('.field').querySelector('label').textContent=mode==='verbatim'?'Opacité du dégradé':'Assombrissement de l’image';
  detailsField.hidden=mode!=='decryptage';speakerField.hidden=mode!=='verbatim';roleField.hidden=mode!=='verbatim';
  $('highlightArea').hidden=mode==='caalors'||mode==='sondage';
  $('downloadBtn').classList.toggle('alertExport',mode==='alerte');
