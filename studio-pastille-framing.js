@@ -364,7 +364,7 @@
     redraw();
   });
   window.TVPlusPastilleFraming = {
-    sync, frame, reset, getSettings: () => ({...framing, zoom:state.zoom, dx:state.dx, dy:state.dy}),
+    sync, frame, reset, restore(settings){for(const key of Object.keys(defaults()))if(key in settings)framing[key]=settings[key];sync();}, getSettings: () => ({...framing, zoom:state.zoom, dx:state.dx, dy:state.dy}),
     bounds: () => {
       const f = frame();
       if (!state.image) return {mx:0,my:0};

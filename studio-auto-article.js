@@ -6,7 +6,7 @@ const text=$("studioArticleBody"),title=$("studioCaptionTitle"),link=$("studioCa
 if(!button||!input||!mode||!details||!text||!title||!link||!status)return;
 const STATE={current:null};
 window.TVPlusAutoArticle=STATE;
-const KEY="tvplus-auto-article-v3";
+const KEY=Productions.key("tvplus-auto-article-v3");
 const group=mode.closest(".studio-form-grid");
 if(group)group.insertAdjacentElement("afterend",details);
 details.open=true;

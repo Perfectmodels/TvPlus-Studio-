@@ -4,7 +4,12 @@
 <meta charset="utf-8"/>
 <meta content="width=device-width,initial-scale=1" name="viewport"/>
 <meta content="#0d1423" name="theme-color"/>
-<title>TV+ Studio — Générateur d'affiches</title>
+<title>TV+ Studio · Création</title>
+<script>if(window.top===window.self && !location.search && !location.hash) location.replace('productions.html');</script>
+<script src="/production-store.js"></script>
+<link rel="stylesheet" href="/production-editor.css">
+<script defer src="/production-inspector.js"></script>
+<script defer src="/production-editor.js"></script>
 <link href="https://fonts.googleapis.com" rel="preconnect"/>
 <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
 <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700;800;900&amp;family=Barlow+Condensed:wght@600;700;800;900&amp;family=Barlow+Semi+Condensed:wght@600;700;800;900&amp;display=swap" rel="stylesheet"/>
@@ -634,7 +639,7 @@ function layoutWords(words,maxW,font){
 }
 function drawHeadline(){const past=state.mode==='pastille';const title=state.headline.trim()?state.headline:'Votre titre d’actualité';const words=splitWordsWithPositions(title);if(!words.length)return;
   // Zones typographiques garanties hors de la catégorie, du logo et du pied de page.
-  const startX=past?65:48, startY=past?754:493, maxW=past?1070:1100, bottom=1018,maxH=bottom-startY,scaleX=past?Math.max(.85,Math.min(1.15,(Number(state.widthPercent)||100)/100)):1;
+  const startX=state.headlineX??(past?65:48), startY=state.headlineY??(past?754:493), maxW=Math.min(past?1070:1100,1152-startX), bottom=1018,maxH=bottom-startY,scaleX=past?Math.max(.85,Math.min(1.15,(Number(state.widthPercent)||100)/100)):1;
   const target=(past?74:124)*state.fontScale/100;
   let low=0.5,high=target,best=null,font=low;
   for(let attempt=0;attempt<20;attempt++){const mid=(low+high)/2;const candidate=layoutWords(words,maxW/scaleX,mid);if(candidate.ok&&candidate.height<=maxH){best=candidate;font=mid;low=mid;}else high=mid;}
@@ -690,16 +695,16 @@ $('clearWordSizes').addEventListener('click',()=>{state.wordSizes.clear();syncSi
 const selectHeadlineWords=()=>{if(state.tool!=='size')return;const ta=$('headline'),start=ta.selectionStart,end=ta.selectionEnd;if(end<=start)return;const hits=splitWordsWithPositions(state.headline).filter(w=>w.start<end&&w.end>start);state.sizeSelection=new Set(hits.map(w=>w.index));syncSizeControls();renderTokens();};
 $('headline').addEventListener('select',selectHeadlineWords);
 $('headline').addEventListener('keyup',selectHeadlineWords);
-$('photoInput').addEventListener('change',e=>{const file=e.target.files[0];e.target.value='';loadFile(file,(img,name)=>{state.image=img;state.sample=false;state.zoom=100;state.dx=0;state.dy=0;$('zoom').value='100';$('zoomLabel').textContent='100 %';$('photoName').textContent=name;draw();});});
+$('photoInput').addEventListener('change',e=>{const file=e.target.files[0];e.target.value='';loadFile(file,(img,name)=>{state.image=img;state.sample=false;window.TVPlusEditorial?.scheduleSave();state.zoom=100;state.dx=0;state.dy=0;$('zoom').value='100';$('zoomLabel').textContent='100 %';$('photoName').textContent=name;draw();});});
 $('logoInput').addEventListener('change',e=>loadFile(e.target.files[0],(img,name)=>{state.logo=img;$('logoName').textContent=name;draw();}));
 $('resetPhoto').addEventListener('click',async()=>{state.image=await loadImage(SAMPLE_PHOTO);state.sample=true;state.zoom=100;state.dx=0;state.dy=0;$('zoom').value=100;$('zoomLabel').textContent='100 %';$('photoName').textContent="Photo d'exemple fournie";draw();});
 $('resetLogo').addEventListener('click',async()=>{state.logo=await loadImage(DEFAULT_LOGO);$('logoName').textContent='Logo extrait du modèle fourni';draw();});
 $('zoom').addEventListener('input',e=>{state.zoom=Number(e.target.value);$('zoomLabel').textContent=state.zoom+' %';draw();});
 $('darkness').addEventListener('input',e=>{state.darkness=Number(e.target.value);$('darknessLabel').textContent=state.darkness+' %';draw();});
 $('webText').addEventListener('input',e=>{state.website=e.target.value;draw();});
-const drop=$('photoDrop');for(const name of ['dragenter','dragover'])drop.addEventListener(name,e=>{e.preventDefault();drop.classList.add('dragover');});for(const name of ['dragleave','drop'])drop.addEventListener(name,e=>{e.preventDefault();drop.classList.remove('dragover');});drop.addEventListener('drop',e=>loadFile(e.dataTransfer.files[0],(img,name)=>{state.image=img;state.sample=false;state.zoom=100;state.dx=0;state.dy=0;$('zoom').value=100;$('zoomLabel').textContent='100 %';$('photoName').textContent=name;draw();}));
+const drop=$('photoDrop');for(const name of ['dragenter','dragover'])drop.addEventListener(name,e=>{e.preventDefault();drop.classList.add('dragover');});for(const name of ['dragleave','drop'])drop.addEventListener(name,e=>{e.preventDefault();drop.classList.remove('dragover');});drop.addEventListener('drop',e=>loadFile(e.dataTransfer.files[0],(img,name)=>{state.image=img;state.sample=false;window.TVPlusEditorial?.scheduleSave();state.zoom=100;state.dx=0;state.dy=0;$('zoom').value=100;$('zoomLabel').textContent='100 %';$('photoName').textContent=name;draw();}));
 let drag=null;const shell=$('canvasShell');shell.addEventListener('pointerdown',e=>{if(e.pointerType!=='mouse'&&e.pointerType!=='touch'&&e.pointerType!=='pen')return;drag={x:e.clientX,y:e.clientY,dx:state.dx,dy:state.dy};shell.setPointerCapture(e.pointerId);});shell.addEventListener('pointermove',e=>{if(!drag)return;const r=poster.getBoundingClientRect(),factor=1200/r.width;state.dx=drag.dx+(e.clientX-drag.x)*factor;state.dy=drag.dy+(e.clientY-drag.y)*factor;draw();});shell.addEventListener('pointerup',()=>drag=null);shell.addEventListener('pointercancel',()=>drag=null);
-$('downloadBtn').addEventListener('click',async()=>{try{await document.fonts.load(headlineCanvasFont(72));await document.fonts.load('400 29px "Barlow"');}catch(err){}draw();const sz=Number($('exportSize').value);const out=document.createElement('canvas');out.width=sz;out.height=sz;const c=out.getContext('2d');c.imageSmoothingQuality='high';c.drawImage(poster,0,0,sz,sz);out.toBlob(blob=>{if(!blob){alert('Impossible de générer le PNG.');return;}const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='tvplus-'+state.mode+'-'+new Date().toISOString().slice(0,10)+'.png';document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),5000);},'image/png');});
+$('downloadBtn').addEventListener('click',async()=>{try{await document.fonts.load(headlineCanvasFont(72));await document.fonts.load('400 29px "Barlow"');}catch(err){}draw();const sz=Number($('exportSize').value);const out=document.createElement('canvas');out.width=sz;out.height=sz;const c=out.getContext('2d');c.imageSmoothingQuality='high';c.drawImage(poster,0,0,sz,sz);out.toBlob(blob=>{if(!blob){alert('Impossible de générer le PNG.');return;}const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='tvplus-'+state.mode+'-'+new Date().toISOString().slice(0,10)+'.png';Productions.exported('poster',blob,a.download);document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),5000);},'image/png');});
 $('resetAll').addEventListener('click',async()=>{state.mode='alerte';state.category='ÉCONOMIE';state.headline=sampleTitle;state.highlightedIndices=matchingPhraseWords(sampleTitle,['Pékin','24 milliards','francs CFA au Gabon']);state.wordSizes.clear();state.sizeSelection.clear();state.fontScale=100;state.darkness=70;state.zoom=100;state.dx=0;state.dy=0;state.website='tvplusafrique.com';$('headline').value=sampleTitle;$('category').value='ÉCONOMIE';$('fontScale').value=100;$('fontScaleLabel').textContent='100 %';$('zoom').value=100;$('zoomLabel').textContent='100 %';$('darkness').value=70;$('darknessLabel').textContent='70 %';$('webText').value=state.website;state.fontFamily='Barlow';state.fontWeight=900;$('fontFamily').value='Barlow';$('fontWeight').value='900';refreshBarlow();state.image=await loadImage(SAMPLE_PHOTO);state.logo=await loadImage(DEFAULT_LOGO);state.sample=true;$('photoName').textContent="Photo d'exemple fournie";$('logoName').textContent='Logo extrait du modèle fourni';updateMode('pastille');setTool('highlight');renderTokens();draw();});
 state.highlightedIndices=matchingPhraseWords(sampleTitle,['Pékin','24 milliards','francs CFA au Gabon']);
 Promise.all([loadImage(SAMPLE_PHOTO),loadImage(DEFAULT_LOGO)]).then(([im,logo])=>{state.image=im;state.logo=logo;renderTokens();draw();}).catch(()=>{renderTokens();draw();});
@@ -744,6 +749,10 @@ const speakerField=makeField('speaker','Auteur de la citation','input','');
 const roleField=makeField('role','Fonction de l’auteur','input','');
 const textPositionDefaults={quoteX:76,quoteY:290,quoteW:760,authorX:104,authorY:972,roleX:105,roleY:1025};
 let textPosition={...textPositionDefaults};
+window.TVPlusPosterText={
+ snapshot:()=>({...textPosition}),
+ restore(row){detailText=row.details||'';speakerText=row.speaker||'';roleText=row.role||'';textPosition={...textPositionDefaults,...row.position};syncTextPosition();}
+};
 const textPositionField=document.createElement('details');textPositionField.className='field';textPositionField.hidden=true;textPositionField.style.cssText='padding:12px;border:1px solid #48647f;border-radius:10px';
 const positionControls=[['quoteX','Citation — horizontal',40,1000],['quoteY','Citation — vertical',150,1000],['quoteW','Largeur de la citation',180,1120],['authorX','Auteur — horizontal',40,1000],['authorY','Auteur — vertical',40,1100],['roleX','Fonction — horizontal',40,1000],['roleY','Fonction — vertical',40,1120]];
 textPositionField.innerHTML='<summary style="cursor:pointer;font-weight:700">Position des textes</summary>'+positionControls.map(([key,label,min,max])=>`<label class="field-label" for="vt-${key}" style="margin-top:10px">${label}</label><div class="range-row"><input type="range" id="vt-${key}" min="${min}" max="${max}" step="1" value="${textPosition[key]}"><output id="vt-${key}-out">${textPosition[key]} px</output></div>`).join('')+'<button type="button" class="ghost mini-btn" id="vt-reset">Réinitialiser les textes</button>';
@@ -912,7 +921,7 @@ $('downloadBtn').addEventListener('click',e=>{if(!addedModes.includes(state.mode
  const w=Number($('exportSize').value),h=state.mode==='decryptage'?Math.round(w*9/16):state.mode==='sondage'?Math.round(w*5/4):w;
  Promise.all([document.fonts.load(`${state.fontWeight} 70px "${state.fontFamily}"`),document.fonts.load('400 30px "Barlow"')]).catch(()=>{}).then(()=>{
  draw();const out=document.createElement('canvas');out.width=w;out.height=h;const g=out.getContext('2d');g.imageSmoothingQuality='high';g.drawImage(poster,0,0,w,h);
- out.toBlob(blob=>{if(!blob){alert('Impossible de générer le PNG');return;}const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='tvplus-'+state.mode+'-'+new Date().toISOString().slice(0,10)+'.png';document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),5000);},'image/png');
+ out.toBlob(blob=>{if(!blob){alert('Impossible de générer le PNG');return;}const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='tvplus-'+state.mode+'-'+new Date().toISOString().slice(0,10)+'.png';Productions.exported('poster',blob,a.download);document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),5000);},'image/png');
  });
 },true);
 // Reset only the selected template, not all the other drafts.
