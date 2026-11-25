@@ -3,8 +3,8 @@
 const $ = id => document.getElementById(id);
 const modes = ["pastille","alerte","decryptage","verbatim","caalors","sondage"];
 const labels = {pastille:"Pastille",alerte:"Alerte info",decryptage:"Décryptage",verbatim:"Verbatim",caalors:"Ça alors !",sondage:"Le Sondage TV+"};
-const DB_NAME="tvplus-editorial-local-v1", STORE="posters", LAST="tvplus:last-edit-mode";
-const stateKey="tvplus:caption-settings-v1";
+const DB_NAME=Productions.key("tvplus-editorial-local-v1"), STORE="posters", LAST=Productions.key("tvplus:last-edit-mode");
+const stateKey=Productions.key("tvplus:caption-settings-v1");
 let dbPromise=null, restoring=true, pending=null, queue=Promise.resolve();
 const bank=new Map(), cache=new WeakMap();
 const savedImageURLs=[];
@@ -38,7 +38,7 @@ function readSnapshot(){
   highlighted:[...state.highlightedIndices],sizes:[...state.wordSizes],
   fontScale:state.fontScale,lineHeight:state.lineHeight,letterSpacing:state.letterSpacing,widthPercent:state.widthPercent,fontFamily:state.fontFamily,fontWeight:state.fontWeight,
   darkness:state.darkness,website:state.website,zoom:state.zoom,dx:state.dx,dy:state.dy,
-  sample:state.sample,photoRef:!state.sample?state.image:null,
+  headlineX:state.headlineX,headlineY:state.headlineY,position:window.TVPlusPosterText?.snapshot(),framing:window.TVPlusPastilleFraming?.getSettings(),sample:state.sample,photoRef:!state.sample?state.image:null,
   logoRef:state.logo&&state.logo.src!==DEFAULT_LOGO?state.logo:null,
   extra:window.TVPlusExtraTemplates?.snapshot(state.mode)||null,
   updatedAt:Date.now()
@@ -104,6 +104,8 @@ async function applySaved(mode){
   state.fontWeight=Number(row.fontWeight)||900;state.darkness=Number(row.darkness??70);
   state.website=row.website||"tvplusafrique.com";
   state.zoom=Number(row.zoom)||100;state.dx=Number(row.dx)||0;state.dy=Number(row.dy)||0;
+  state.headlineX=row.headlineX;state.headlineY=row.headlineY;window.TVPlusPosterText?.restore(row);
+  if(row.framing)window.TVPlusPastilleFraming?.restore(row.framing);
   if(photo){state.image=photo;state.sample=false;}
   if(logo)state.logo=logo;
   const edits={headline:row.headline||"",category:row.category||"",details:row.details||"",
@@ -375,7 +377,7 @@ dlg.addEventListener("close",()=>{
  if(workspace&&workspace.dataset.workflowPanel==="editorial")workspace.dataset.workflowPanel="poster";
  document.dispatchEvent(new CustomEvent("tvplus:workflow-stage",{detail:{stage:"poster"}}));
 });
-window.TVPlusEditorial={show,close:closeEditorial,dialog:dlg};
+window.TVPlusEditorial={issues:qualityIssues,scheduleSave,save:()=>{flushSave();return queue;},show,close:closeEditorial,dialog:dlg};
 dlg.querySelectorAll("[data-tooltab]").forEach(b=>b.addEventListener("click",()=>tab(b.dataset.tooltab)));
 const fields=["studioCaptionType","studioCaptionLink","studioCaptionIntro","studioCaptionHashtags","studioCaptionTitle","studioArticleBody"];
 let captionTitleSource="",captionTitleCustomized=false,articleBoundTitle="";
@@ -687,6 +689,7 @@ $("studioCaptionCopy").addEventListener("click",async()=>{
  try{
   if(navigator.clipboard&&window.isSecureContext)await navigator.clipboard.writeText(text);
   else{$("studioCaptionPreview").select();if(!document.execCommand("copy"))throw Error("Copie non disponible");}
+  if(Productions.id)Productions.patch(Productions.id,{captionStatus:"Copiée"}).catch(Productions.report);
   $("studioCaptionStatus").textContent="Légende copiée avec le gras Unicode. Vérifiez l’exactitude du titre et des hashtags.";
  }catch(_){$("studioCaptionStatus").textContent="Copie impossible : sélectionnez le texte ci-dessus.";$("studioCaptionPreview").focus();$("studioCaptionPreview").select();}
 });
@@ -769,7 +772,7 @@ $("studioOptimizedExport").addEventListener("click",async()=>{
   const ext=blob.type==="image/png"?"png":blob.type==="image/jpeg"?"jpg":"webp";
   const url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;
   a.download="tvplus-"+state.mode+"-"+new Date().toISOString().slice(0,10)+"-optimise."+ext;
-  document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),20000);
+  document.body.append(a);a.click();a.remove();await Productions.exported("poster",blob,a.download);setTimeout(()=>URL.revokeObjectURL(url),20000);
   target.textContent=`Téléchargement prêt : ${w} × ${h} · ${(blob.size/1024).toFixed(0)} Ko · ${ext.toUpperCase()}`;
  }catch(err){target.textContent="Export impossible : "+(err?.message||String(err));}
 });
@@ -802,6 +805,6 @@ window.addEventListener("pagehide",()=>{if(!restoring&&pending){clearTimeout(pen
   }
   status("Brouillons locaux prêts","ok");updateLibrary();
  }catch(err){status("Sauvegarde locale indisponible","warn");console.warn("TV+ draft initialization:",err);}
- finally{restoring=false;}
+ finally{restoring=false;document.dispatchEvent(new CustomEvent("studio-drafts-ready",{detail:{restored:bank.has(state.mode)}}));}
 })();
 })();

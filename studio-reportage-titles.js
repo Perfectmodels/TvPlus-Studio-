@@ -50,7 +50,7 @@
   const formatFields={reportage:{title:$("studioOnlyTitleInput"),brief:$("studioReportageBrief")}, "60secondes":{title:$("studio60TitleInput"),brief:$("studio60Brief")},alerte:{title:$("studioAlertTitleInput"),brief:$("studioAlertBrief")}};
   const status=$("studioProofreadingStatus"),suggestions=$("studioRewriteSuggestions");
   const oldTitleBox=$("studioCaptionTitleBlock"),shortener=$("studioShortenerPanel"),articlePanel=$("studioArticleHeadlineTool");
-  const KEY="tvplus:format-caption-title-v1";
+  const KEY=Productions.key("tvplus:format-caption-title-v1");
   let memory={};
   try{memory=JSON.parse(localStorage.getItem(KEY)||"{}")||{}}catch(_){}
   const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(memory))}catch(_){}};
