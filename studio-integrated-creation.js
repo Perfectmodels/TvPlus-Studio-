@@ -95,6 +95,12 @@ async function installDirectEditorial(){
  const editorial=window.TVPlusEditorial,dialog=editorial?.dialog;
  const caption=dialog?.querySelector('[data-toolpanel="caption"]'),quality=dialog?.querySelector('[data-toolpanel="quality"]');
  if(!caption||!quality)return;
+ if(!Productions.id){
+  const textBox=directSection("Typographie et position du texte",textInspectorSlot);
+  for(const node of [$("fontScale")?.closest(".field"),$("pastilleSpacingField"),$("appearanceDetails")])if(node)textBox.append(node);
+  const imageBox=directSection("Cadrage et dégradé",photoSlot);
+  for(const node of [$("pastillePhotoFraming"),$("mediaDetails")])if(node)imageBox.append(node);
+ }
  // Keep each live panel in the editor itself, rather than moving between views.
  const captionBox=directSection("Légende réseaux sociaux",editorialSlot);
  captionBox.append(caption);caption.hidden=false;
@@ -108,6 +114,7 @@ async function installDirectEditorial(){
   return originalShow(key);
  };
  if(dialog.open)editorial.close();
+ if(!Productions.id)editorialSlot.append(button("Mes brouillons",()=>originalShow("drafts")));
  const captionType=$("studioCaptionType");
  if(!Productions.id&&captionType){captionType.value=format()==="alerte"?"alerte":"lire";captionType.dispatchEvent(new Event("change",{bubbles:true}));}
  else $("studioCaptionTitle")?.dispatchEvent(new Event("input",{bubbles:true}));
