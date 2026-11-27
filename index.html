@@ -545,6 +545,7 @@ function drawBackdrop(){let img=state.image;
     ctx.save();ctx.filter='blur(22px)';coverImage(img,-60,-40,1320,1280,1.4);ctx.restore();
     ctx.save();ctx.beginPath();ctx.rect(0,0,1200,890);ctx.clip();coverImage(img,0,0,1200,885,state.zoom/100,state.dx,state.dy);ctx.restore();
   }else{coverImage(img,0,0,1200,1200,state.zoom/100,state.dx,state.dy);}
+  if(state.posterGradient){paintPosterGradient(ctx,1200,1200);return;}
   ctx.fillStyle=`rgba(0,10,28,${state.mode==='pastille'?0.04:0.25})`;ctx.fillRect(0,0,1200,1200);
   const opacity=state.darkness/100;
   if(state.mode==='pastille'){
@@ -703,7 +704,7 @@ $('zoom').addEventListener('input',e=>{state.zoom=Number(e.target.value);$('zoom
 $('darkness').addEventListener('input',e=>{state.darkness=Number(e.target.value);$('darknessLabel').textContent=state.darkness+' %';draw();});
 $('webText').addEventListener('input',e=>{state.website=e.target.value;draw();});
 const drop=$('photoDrop');for(const name of ['dragenter','dragover'])drop.addEventListener(name,e=>{e.preventDefault();drop.classList.add('dragover');});for(const name of ['dragleave','drop'])drop.addEventListener(name,e=>{e.preventDefault();drop.classList.remove('dragover');});drop.addEventListener('drop',e=>loadFile(e.dataTransfer.files[0],(img,name)=>{state.image=img;state.sample=false;window.TVPlusEditorial?.scheduleSave();state.zoom=100;state.dx=0;state.dy=0;$('zoom').value=100;$('zoomLabel').textContent='100 %';$('photoName').textContent=name;draw();}));
-let drag=null;const shell=$('canvasShell');shell.addEventListener('pointerdown',e=>{if(e.pointerType!=='mouse'&&e.pointerType!=='touch'&&e.pointerType!=='pen')return;drag={x:e.clientX,y:e.clientY,dx:state.dx,dy:state.dy};shell.setPointerCapture(e.pointerId);});shell.addEventListener('pointermove',e=>{if(!drag)return;const r=poster.getBoundingClientRect(),factor=1200/r.width;state.dx=drag.dx+(e.clientX-drag.x)*factor;state.dy=drag.dy+(e.clientY-drag.y)*factor;draw();});shell.addEventListener('pointerup',()=>drag=null);shell.addEventListener('pointercancel',()=>drag=null);
+let drag=null;const shell=$('canvasShell');shell.addEventListener('pointerdown',e=>{if(e.pointerType!=='mouse'&&e.pointerType!=='touch'&&e.pointerType!=='pen')return;drag={x:e.clientX,y:e.clientY,dx:state.dx,dy:state.dy};shell.setPointerCapture(e.pointerId);});shell.addEventListener('pointermove',e=>{if(!drag)return;const r=poster.getBoundingClientRect(),factor=poster.width/r.width;state.dx=drag.dx+(e.clientX-drag.x)*factor;state.dy=drag.dy+(e.clientY-drag.y)*poster.height/r.height;draw();});shell.addEventListener('pointerup',()=>drag=null);shell.addEventListener('pointercancel',()=>drag=null);
 $('downloadBtn').addEventListener('click',async()=>{try{await document.fonts.load(headlineCanvasFont(72));await document.fonts.load('400 29px "Barlow"');}catch(err){}draw();const sz=Number($('exportSize').value);const out=document.createElement('canvas');out.width=sz;out.height=sz;const c=out.getContext('2d');c.imageSmoothingQuality='high';c.drawImage(poster,0,0,sz,sz);out.toBlob(blob=>{if(!blob){alert('Impossible de générer le PNG.');return;}const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='tvplus-'+state.mode+'-'+new Date().toISOString().slice(0,10)+'.png';Productions.exported('poster',blob,a.download);document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),5000);},'image/png');});
 $('resetAll').addEventListener('click',async()=>{state.mode='alerte';state.category='ÉCONOMIE';state.headline=sampleTitle;state.highlightedIndices=matchingPhraseWords(sampleTitle,['Pékin','24 milliards','francs CFA au Gabon']);state.wordSizes.clear();state.sizeSelection.clear();state.fontScale=100;state.darkness=70;state.zoom=100;state.dx=0;state.dy=0;state.website='tvplusafrique.com';$('headline').value=sampleTitle;$('category').value='ÉCONOMIE';$('fontScale').value=100;$('fontScaleLabel').textContent='100 %';$('zoom').value=100;$('zoomLabel').textContent='100 %';$('darkness').value=70;$('darknessLabel').textContent='70 %';$('webText').value=state.website;state.fontFamily='Barlow';state.fontWeight=900;$('fontFamily').value='Barlow';$('fontWeight').value='900';refreshBarlow();state.image=await loadImage(SAMPLE_PHOTO);state.logo=await loadImage(DEFAULT_LOGO);state.sample=true;$('photoName').textContent="Photo d'exemple fournie";$('logoName').textContent='Logo extrait du modèle fourni';updateMode('pastille');setTool('highlight');renderTokens();draw();});
 state.highlightedIndices=matchingPhraseWords(sampleTitle,['Pékin','24 milliards','francs CFA au Gabon']);
@@ -840,7 +841,7 @@ function photoBackdrop(w,h){
 }
 function drawDecryptage(){
  const W=1600,H=900;photoBackdrop(W,H);
- ctx.fillStyle='rgba(9,17,35,.05)';ctx.fillRect(0,0,W,H);
+ if(state.posterGradient)paintPosterGradient(ctx,W,H);else{ctx.fillStyle='rgba(9,17,35,.05)';ctx.fillRect(0,0,W,H);}
  ctx.fillStyle='#071434';ctx.beginPath();ctx.moveTo(910,0);ctx.lineTo(W,0);ctx.lineTo(W,H);ctx.lineTo(650,H);ctx.closePath();ctx.fill();
  drawLogoBox(1360,26,195,145);
  ctx.fillStyle='#ffbd0d';ctx.fillRect(944,213,290,57);
@@ -858,7 +859,7 @@ function drawVerbatim(){
  const W=1200,H=1200;photoBackdrop(W,H);
  // More contrast beneath the quote without crushing a contributor’s face.
  const opacity=Math.max(0,Math.min(1,Number(state.darkness)/100));
- const grad=ctx.createLinearGradient(0,320,0,H);grad.addColorStop(0,'rgba(7,12,32,0)');grad.addColorStop(.45,`rgba(3,5,28,${opacity*.55})`);grad.addColorStop(1,`rgba(3,5,28,${opacity})`);ctx.fillStyle=grad;ctx.fillRect(0,320,W,880);
+ if(state.posterGradient)paintPosterGradient(ctx,W,H);else{const grad=ctx.createLinearGradient(0,320,0,H);grad.addColorStop(0,'rgba(7,12,32,0)');grad.addColorStop(.45,`rgba(3,5,28,${opacity*.55})`);grad.addColorStop(1,`rgba(3,5,28,${opacity})`);ctx.fillStyle=grad;ctx.fillRect(0,320,W,880);}
  ctx.fillStyle='#fff';ctx.font='900 225px Georgia,serif';ctx.textAlign='left';ctx.textBaseline='alphabetic';ctx.fillText('“',textPosition.quoteX-11,textPosition.quoteY-29);
  const q=fitStyledHeadline(state.headline||'Saisissez votre citation ici.',textPosition.quoteX,textPosition.quoteY,Math.min(textPosition.quoteW,1160-textPosition.quoteX),Math.max(30,Math.min(925,textPosition.authorY-47)-textPosition.quoteY),56,'#ffffff'); // Colonne gauche, portrait dégagé à droite
  fitParagraph(speakerText||'Nom de l’auteur',textPosition.authorX,textPosition.authorY,Math.min(730,1160-textPosition.authorX),47,35,900,'#ffffff',1.06);

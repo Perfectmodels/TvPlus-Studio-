@@ -185,10 +185,11 @@
   if(useImage){
    const img=state.image,scale=Math.max(W/img.width,H/img.height)*Math.max(1,state.zoom/100);
    const iw=img.width*scale,ih=img.height*scale;
-   const dx=Math.max(-(iw-W)/2,Math.min((iw-W)/2,Number(state.dx)||0));
-   const dy=Math.max(-(ih-H)/2,Math.min((ih-H)/2,Number(state.dy)||0));
+   const dx=Productions.id?Number(state.dx)||0:Math.max(-(iw-W)/2,Math.min((iw-W)/2,Number(state.dx)||0));
+   const dy=Productions.id?Number(state.dy)||0:Math.max(-(ih-H)/2,Math.min((ih-H)/2,Number(state.dy)||0));
    g.drawImage(img,(W-iw)/2+dx,(H-ih)/2+dy,iw,ih);
   }
+  if(state.posterGradient)paintPosterGradient(g,W,H);else{
   const veil=g.createLinearGradient(0,0,0,H);
   if(mode==='caalors'){
    veil.addColorStop(0,'rgba(2,16,39,.03)');
@@ -202,6 +203,7 @@
    veil.addColorStop(1,'rgba(4,20,61,.98)');
   }
   rect(g,0,0,W,H,veil);
+  }
   if(mode==='sondage'&&!useImage){
    // Decorative radio/antenna traces, generated vectorially, not a false photograph.
    g.save();g.strokeStyle='rgba(176,211,247,.095)';g.lineWidth=3;

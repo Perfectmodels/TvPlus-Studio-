@@ -38,7 +38,7 @@ function readSnapshot(){
   highlighted:[...state.highlightedIndices],sizes:[...state.wordSizes],
   fontScale:state.fontScale,lineHeight:state.lineHeight,letterSpacing:state.letterSpacing,widthPercent:state.widthPercent,fontFamily:state.fontFamily,fontWeight:state.fontWeight,
   darkness:state.darkness,website:state.website,zoom:state.zoom,dx:state.dx,dy:state.dy,
-  headlineX:state.headlineX,headlineY:state.headlineY,position:window.TVPlusPosterText?.snapshot(),framing:window.TVPlusPastilleFraming?.getSettings(),sample:state.sample,photoRef:!state.sample?state.image:null,
+  posterGradient:state.posterGradient&&{...state.posterGradient},headlineX:state.headlineX,headlineY:state.headlineY,position:window.TVPlusPosterText?.snapshot(),framing:window.TVPlusPastilleFraming?.getSettings(),sample:state.sample,photoRef:!state.sample?state.image:null,
   logoRef:state.logo&&state.logo.src!==DEFAULT_LOGO?state.logo:null,
   extra:window.TVPlusExtraTemplates?.snapshot(state.mode)||null,
   updatedAt:Date.now()
@@ -104,7 +104,7 @@ async function applySaved(mode){
   state.fontWeight=Number(row.fontWeight)||900;state.darkness=Number(row.darkness??70);
   state.website=row.website||"tvplusafrique.com";
   state.zoom=Number(row.zoom)||100;state.dx=Number(row.dx)||0;state.dy=Number(row.dy)||0;
-  state.headlineX=row.headlineX;state.headlineY=row.headlineY;window.TVPlusPosterText?.restore(row);
+  state.posterGradient=row.posterGradient||null;state.headlineX=row.headlineX;state.headlineY=row.headlineY;window.TVPlusPosterText?.restore(row);
   if(row.framing)window.TVPlusPastilleFraming?.restore(row.framing);
   if(photo){state.image=photo;state.sample=false;}
   if(logo)state.logo=logo;

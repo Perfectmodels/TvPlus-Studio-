@@ -150,6 +150,7 @@
     ctx.drawImage(img, -iw / 2, -ih / 2, iw, ih);
     ctx.restore();
 
+    if(state.posterGradient){paintPosterGradient(ctx,W,W);return;}
     // Preserve the same TV+ dark-blue treatment; titles, logo and footer render afterwards.
     ctx.fillStyle = 'rgba(0,10,28,0.04)';
     ctx.fillRect(0, 0, W, W);
