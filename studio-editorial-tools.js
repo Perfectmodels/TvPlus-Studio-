@@ -239,7 +239,7 @@ dlg.innerHTML=`
   <p class="studio-note" id="studioOptimizedStatus" role="status"></p>
  </section>
  </div>
- <div class="studio-editorial-foot"><span>Aucune API · Pas de publication automatique</span><button type="button" id="studioCloseFooter">Fermer</button></div>
+ <div class="studio-editorial-foot"><span>Groq · Pas de publication automatique</span><button type="button" id="studioCloseFooter">Fermer</button></div>
 `;
 document.body.append(dlg);
 const style=document.createElement("style");
@@ -692,45 +692,6 @@ $("studioCaptionCopy").addEventListener("click",async()=>{
   if(Productions.id)Productions.patch(Productions.id,{captionStatus:"Copiée"}).catch(Productions.report);
   $("studioCaptionStatus").textContent="Légende copiée avec le gras Unicode. Vérifiez l’exactitude du titre et des hashtags.";
  }catch(_){$("studioCaptionStatus").textContent="Copie impossible : sélectionnez le texte ci-dessus.";$("studioCaptionPreview").focus();$("studioCaptionPreview").select();}
-});
-let shortenerConfigured=null;
-async function checkShortener(){
- const label=$("studioShortenStatus");
- try{
-  const res=await fetch("/api/shorten",{method:"GET",cache:"no-store"});
-  if(!res.ok)throw Error("Endpoint indisponible");
-  const result=await res.json();
-  shortenerConfigured=Boolean(result.configured);
-  label.textContent=shortenerConfigured?"Rebrandly est disponible : collez le lien de l’article et créez son URL courte.":"Raccourcisseur prêt : renseignez REBRANDLY_API_KEY dans Vercel pour l’activer.";
- }catch(_){
-  shortenerConfigured=false;
-  label.textContent="Connexion Rebrandly non activée. Le générateur de légendes reste utilisable sans connexion.";
- }
-}
-$("studioShortenerPanel").addEventListener("toggle",()=>{
- if($("studioShortenerPanel").open)checkShortener();
-});
-$("studioShortenAction").addEventListener("click",async()=>{
- const status=$("studioShortenStatus"),action=$("studioShortenAction");
- const destination=$("studioShortDestination").value.trim();
- if(!/^https:\/\/(?:[a-z0-9-]+\.)*tvplusafrique\.com(?:[/:?#]|$)/i.test(destination)){
-  status.textContent="Insérez une URL HTTPS de tvplusafrique.com.";return;
- }
- action.disabled=true;status.textContent="Création du lien court…";
- try{
-  const response=await fetch("/api/shorten",{
-   method:"POST",headers:{"Content-Type":"application/json"},
-   body:JSON.stringify({destination,title:state.headline||"TV+ Afrique"})
-  });
-  const result=await response.json();
-  if(!response.ok)throw Error(result.error||"Création du lien impossible");
-  if(!result.shortUrl||!result.shortUrl.startsWith("https://l.tvplusafrique.com/"))throw Error("Le lien retourné n’utilise pas le domaine TV+.");
-  $("studioCaptionLink").value=result.shortUrl;
-  saveCaptionSettings();generateCaption();
-  status.textContent="Lien court créé et ajouté à la légende : "+result.shortUrl;
-  $("studioCaptionStatus").textContent="Le lien de l’article a été ajouté à votre légende.";
- }catch(err){status.textContent=err?.message||"La création du lien a échoué.";}
- finally{action.disabled=false;}
 });
 function updateLibrary(){
  const list=$("studioDraftList");if(!list)return;list.replaceChildren();

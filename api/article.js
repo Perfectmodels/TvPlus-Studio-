@@ -1,6 +1,6 @@
 'use strict';
 // Fetch and extract only public TV+ Afrique articles. No arbitrary external URL.
-const allowed=new Set(["www.tvplusafrique.com","tvplusafrique.com"]);
+const allowed=new Set(["www.tvplusafrique.com","tvplusafrique.com","l.tvplusafrique.com"]);
 const counters=new Map();
 function respond(res,code,json){
  res.setHeader("Content-Type","application/json; charset=utf-8");
@@ -9,10 +9,16 @@ function respond(res,code,json){
 }
 function safeURL(raw){
  if(typeof raw!=="string"||raw.length>2048||/\\/.test(raw))return null;
- try{const url=new URL(raw.trim());
- if(url.protocol!=="https:"||!allowed.has(url.hostname.toLowerCase())||url.port||url.username||url.password)return null;
- if(!/^\/(?:$|index\.php$|articles?(?:\/|$)|actualites?(?:\/|$)|news(?:\/|$))/i.test(url.pathname))return null;
- return url.href;
+ try{
+  let value=raw.trim();
+  if(/^(?:www\.|l\.)?tvplusafrique\.com(?:[/?#]|$)/i.test(value))value="https://"+value;
+  const url=new URL(value);
+  if(!["http:","https:"].includes(url.protocol)||!allowed.has(url.hostname.toLowerCase())||url.port||url.username||url.password)return null;
+  url.protocol="https:";url.hash="";
+  if(url.hostname==="l.tvplusafrique.com"){
+   if(!/^\/[A-Za-z0-9_-]{1,120}\/?$/.test(url.pathname))return null;
+  }else if(!/^\/(?:a\/\d+\/?$|index\.php$|articles?\/[^/]+(?:\/[^/]+)*\/?$|actualites?\/[^/]+(?:\/[^/]+)*\/?$|news\/[^/]+(?:\/[^/]+)*\/?$)/i.test(url.pathname))return null;
+  return url.href;
  }catch(_){return null}
 }
 const entities={nbsp:" ",amp:"&",lt:"<",gt:">",quot:'"',apos:"'",eacute:"é",egrave:"è",ecirc:"ê",agrave:"à",ccedil:"ç",rsquo:"’",ldquo:"“",rdquo:"”",icirc:"î",ocirc:"ô",acirc:"â",ucirc:"û",euml:"ë",iuml:"ï",ouml:"ö",auml:"ä",uuml:"ü",ugrave:"ù",ograve:"ò",ndash:"–",mdash:"—",hellip:"…"};
@@ -64,8 +70,8 @@ function jsonArticle(html){
 }
 function extract(html,url){
  const structured=jsonArticle(html)||{};
- const title=plain(/<h1\b[^>]*>([\s\S]*?)<\/h1>/i.exec(html)?.[1]||"")||
- structured.title||getMeta(html,"og:title")||plain(/<title\b[^>]*>([\s\S]*?)<\/title>/i.exec(html)?.[1]||"");
+ const title=structured.title||plain(/<h1\b[^>]*>([\s\S]*?)<\/h1>/i.exec(html)?.[1]||"")||
+ getMeta(html,"og:title")||plain(/<title\b[^>]*>([\s\S]*?)<\/title>/i.exec(html)?.[1]||"");
  const cleanTitle=String(title).replace(/\s*[|·–]\s*TV\+?\s*(?:Afrique)?\s*$/i,"").trim().slice(0,260);
  if(cleanTitle.length<8)throw Error("Titre de l'article introuvable.");
  let body=structured.body||"";
@@ -91,18 +97,20 @@ function extract(html,url){
   category:getMeta(html,"article:section")||"",characters:body.length};
 }
 async function get(url){
- let current=safeURL(url);if(!current)throw Object.assign(Error("URL d'article TV+ Afrique invalide."),{status:400});
- for(let i=0;i<3;i++){
+ let current=safeURL(url);if(!current)throw Object.assign(Error("Lien d’article TV+ Afrique invalide. Collez un lien /a/…, /article/… ou l.tvplusafrique.com."),{status:400});
+ for(let i=0;i<6;i++){
   let res;
   try{res=await fetch(current,{redirect:"manual",headers:{"accept":"text/html,application/xhtml+xml"},signal:AbortSignal.timeout(10000)})}
   catch(_){throw Object.assign(Error("Le serveur TV+ Afrique ne répond pas."),{status:502})}
   if([301,302,303,307,308].includes(res.status)){
    const next=res.headers.get("location");
+   if(!next)throw Object.assign(Error("Lien de redirection incomplet."),{status:502});
    try{current=safeURL(new URL(next,current).href)}catch(_){current=null}
    if(!current)throw Object.assign(Error("Redirection externe refusée."),{status:403});
    continue;
   }
   if(!res.ok)throw Object.assign(Error("Article inaccessible : HTTP "+res.status),{status:502});
+  if(new URL(current).hostname==="l.tvplusafrique.com")throw Object.assign(Error("Ce lien court ne mène pas à un article TV+."),{status:422});
   const kind=String(res.headers.get("content-type")||"").toLowerCase();
   if(kind&&!kind.includes("text/html"))throw Object.assign(Error("Cette adresse ne contient pas de page HTML."),{status:415});
   if(Number(res.headers.get("content-length")||0)>1700000)throw Object.assign(Error("Page trop volumineuse."),{status:413});
