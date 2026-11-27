@@ -1,7 +1,7 @@
 /* Unified creation workspace: tools reuse the existing poster, photo and caption engines. */
 (function(){
 "use strict";
-const $=id=>document.getElementById(id),workspace=document.querySelector(".workspace"),panel=workspace?.querySelector(':scope > section[aria-label="Éditeur d\'affiches"]'),preview=workspace?.querySelector(":scope > .preview-pane");
+const $=id=>document.getElementById(id),workspace=document.querySelector(".workspace"),panel=workspace?.querySelector(":scope > section.panel"),preview=workspace?.querySelector(":scope > .preview-pane");
 if(!workspace||!panel||!preview)return;
 workspace.classList.add("creation-workspace");
 const make=(tag,cls)=>Object.assign(document.createElement(tag),{className:cls||""});
@@ -25,7 +25,7 @@ const taskFor=(mode,action)=>action==="correct"?(mode==="verbatim"?"citation":"c
 function updateMode(){
  const m=format();
  if(m!==modeBefore){contextByMode.set(modeBefore,contextText.value);contextText.value=contextByMode.get(m)||"";modeBefore=m;request++;choices.replaceChildren();status.textContent="";busy=false;for(const b of titleActions.querySelectorAll("button"))b.disabled=false;}
- titleHead.textContent=m==="verbatim"?"Citation assistée par Groq":m==="sondage"?"Question et réponses · Groq":m==="decryptage"?"Titre et angle · Groq":"Titre assisté par Groq";
+ const label=m==="verbatim"?"Citation assistée par Groq":m==="sondage"?"Question et réponses · Groq":m==="decryptage"?"Titre et angle · Groq":"Titre assisté par Groq";if(titleHead.textContent!==label)titleHead.textContent=label;
 }
 function setTitle(value){const f=$("headline");f.value=value;f.dispatchEvent(new Event("input",{bubbles:true}));f.dispatchEvent(new Event("change",{bubbles:true}));window.TVPlusEditorial?.scheduleSave();}
 async function generate(action){
@@ -84,9 +84,10 @@ const observer=new MutationObserver(()=>{
  if(inspector&&inspector.parentElement!==photoSlot){photoSlot.append(inspector);inspector.classList.add("creation-inspector");}
  updateMode();
 });
-observer.observe(workspace,{childList:true,subtree:true});
+observer.observe(workspace,{childList:true,subtree:false});
 document.querySelectorAll(".mode-switch button").forEach(b=>b.addEventListener("click",()=>{requestAnimationFrame(updateMode);closePhoto();}));
 document.addEventListener("studio-drafts-ready",()=>requestAnimationFrame(updateMode));
+window.addEventListener("resize",()=>{updateMode();});
 const css=make("style");css.textContent=`
 .creation-workspace{grid-template-columns:minmax(0, min(48%,570px)) minmax(0,1fr)!important;gap:16px!important}
 .creation-workspace>section.panel{grid-column:1!important;grid-row:1!important;min-width:0;overflow-x:hidden!important}
