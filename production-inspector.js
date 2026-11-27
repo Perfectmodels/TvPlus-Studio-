@@ -7,13 +7,21 @@ function imageGradient(context,width,height,angle,start,end){
   const from=length*start/100,to=Math.max(from+1,length*end/100);
   return context.createLinearGradient(left+x*from,top+y*from,left+x*to,top+y*to);
 }
+// At high opacity, bring the solid part of the gradient closer to its start.
+function setShadeStops(shade,color,opacity){
+  const alpha=Math.max(0,Math.min(100,opacity))/100;
+  const solidAt=1-0.78*alpha*alpha;
+  const solid=color+Math.round(255*alpha).toString(16).padStart(2,'0');
+  shade.addColorStop(0,color+'00');
+  shade.addColorStop(solidAt,solid);
+  if(solidAt<1)shade.addColorStop(1,solid);
+}
 function paintPosterGradient(context,width,height){
   const {angle,start,opacity,color}=state.posterGradient;
   const shade=imageGradient(context,width,height,angle,start,100);
-  shade.addColorStop(0,color+'00');
-  shade.addColorStop(1,color);
+  setShadeStops(shade,color,opacity);
   context.save();
-  context.globalAlpha=opacity/100;
+  context.globalAlpha=1;
   context.fillStyle=shade;
   context.fillRect(0,0,width,height);
   context.restore();
