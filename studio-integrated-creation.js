@@ -31,8 +31,8 @@ function setTitle(value){const f=$("headline");f.value=value;f.dispatchEvent(new
 async function generate(action){
  updateMode();if(busy)return;
  const m=format(),original=currentTitle(),facts=contextText.value.trim(),linked=window.TVPlusAutoArticle?.current;
- const source=facts||(linked?.title===original?linked.body:"")||"";
- if(!original&&!source){status.textContent="Ajoutez un titre ou des faits vérifiés.";context.open=true;contextText.focus();return;}
+ const source=action==="correct"||m==="verbatim"?"":facts||(linked?.title===original?linked.body:"")||"";
+ if(!original&&!source){status.textContent=m==="verbatim"?"Saisissez la citation exacte avant de demander une correction.":"Ajoutez un titre ou des faits vérifiés.";context.open=true;contextText.focus();return;}
  const turn=++request;busy=true;choices.replaceChildren();status.textContent="Groq analyse votre contenu…";for(const b of titleActions.querySelectorAll("button"))b.disabled=true;
  try{
   const task=taskFor(m,action);
@@ -79,12 +79,16 @@ const assistant=$("tvplusAssistantPanel");if(assistant){
  new MutationObserver(()=>{if(!assistant.hidden)scroll(assistant);}).observe(assistant,{attributes:true,attributeFilter:["hidden"]});
 }
 const existing=$("headline")?.parentElement?.querySelector(".ai-inline-btn");if(existing){existing.textContent="Autres outils IA";existing.classList.add("creation-advanced-ai");}
-const observer=new MutationObserver(()=>{
- const inspector=workspace.querySelector(".production-inspector");
- if(inspector&&inspector.parentElement!==photoSlot){photoSlot.append(inspector);inspector.classList.add("creation-inspector");}
- updateMode();
-});
-observer.observe(workspace,{childList:true,subtree:false});
+const textInspectorSlot=make("div","creation-tool-slot");titleSlot.after(textInspectorSlot);
+let connectedInspector=null;
+function connectInspector(){
+ const inspector=workspace.querySelector(".production-inspector");if(!inspector||connectedInspector===inspector)return;
+ connectedInspector=inspector;inspector.classList.add("creation-inspector");
+ const place=()=>{const photo=inspector.querySelector('[data-inspect="photo"]')?.getAttribute("aria-pressed")==="true";const target=photo?photoSlot:textInspectorSlot;if(inspector.parentElement!==target)target.append(inspector);};
+ const changes=new MutationObserver(place);changes.observe(inspector,{subtree:true,attributes:true,attributeFilter:["aria-pressed"]});place();
+}
+const observer=new MutationObserver(()=>{connectInspector();updateMode();});
+observer.observe(workspace,{childList:true,subtree:false});connectInspector();
 document.querySelectorAll(".mode-switch button").forEach(b=>b.addEventListener("click",()=>{requestAnimationFrame(updateMode);closePhoto();}));
 document.addEventListener("studio-drafts-ready",()=>requestAnimationFrame(updateMode));
 window.addEventListener("resize",()=>{updateMode();});
@@ -136,6 +140,12 @@ body.production-active .creation-workspace .creation-inspector[data-open],body.p
  .creation-workspace .preview-actionbar{gap:6px}
  .creation-tool-rail .creation-tool-button{flex:1 1 28%;text-align:center}
  .creation-workspace .studio-editorial-dialog.studio-inline{min-height:0!important}
+}
+@media(max-width:850px) and (min-height:650px){
+ body.production-active:not(.video-only) .creation-workspace>.preview-pane{position:sticky!important;top:54px!important;z-index:15;padding:7px!important}
+ body.production-active:not(.video-only) .creation-workspace .canvas-shell{width:min(38vw,145px)!important}
+ body.production-active:not(.video-only) .creation-workspace .canvas-shell.is-wide{width:min(56vw,200px)!important}
+ body.production-active:not(.video-only) .creation-workspace .preview-actionbar,body.production-active:not(.video-only) .creation-workspace .preview-bottom,body.production-active:not(.video-only) .creation-workspace .preview-pane .info{display:none!important}
 }
 body.production-active.video-only .creation-workspace:not(:has(#studioEditorialDialog[open])){display:none!important}
 body.video-only .creation-workspace>.preview-pane,body.video-only .creation-workspace>section.panel>.creation-tool-rail,body.video-only .creation-workspace>section.panel>.creation-title-assist,body.video-only .creation-workspace #creationPhotoSlot{display:none!important}
