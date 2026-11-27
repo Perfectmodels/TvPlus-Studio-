@@ -6,7 +6,7 @@ const dlg=$("studioEditorialDialog"),caption=dlg?.querySelector('[data-toolpanel
 const kind=$("studioCaptionType");
 if(!dlg||!caption||!kind)return;
 const panel=document.createElement("details");panel.id="tvplusGroqPanel";panel.className="tvplus-groq-assistant";
-panel.innerHTML='<summary><strong>Assistant ChatGPT · Rédaction</strong><span>IA</span></summary>'+
+panel.innerHTML='<summary><strong>Assistant Groq · Rédaction</strong><span>IA</span></summary>'+
 '<div class="tvplus-ai-inner"><p id="tvplusAIConnection" role="status" class="studio-note">Vérifier la connexion Groq…</p>'+
 '<div class="tvplus-ai-two"><label>Travail demandé<select id="tvplusAITask">'+
 '<option value="titre_court">Titre Facebook depuis l’article</option>'+
@@ -18,15 +18,14 @@ panel.innerHTML='<summary><strong>Assistant ChatGPT · Rédaction</strong><span>
 '<label>Texte à modifier<select id="tvplusAIScope"><option value="title">Titre de la légende</option><option value="article">Contenu de l’article</option><option value="caption">Légende complète</option></select></label></div>'+
 '<div class="tvplus-ai-two"><label>Ton<select id="tvplusAITone"><option value="journalistique">Journalistique</option><option value="neutre">Neutre</option><option value="institutionnel">Institutionnel</option><option value="dynamique">Dynamique</option><option value="factuel">Factuel</option></select></label>'+
 '<label>Langue<select id="tvplusAILanguage"><option value="fr">Français</option><option value="en">Anglais</option><option value="es">Espagnol</option><option value="pt">Portugais</option></select></label></div>'+
-'<label class="tvplus-ai-check"><input type="checkbox" id="tvplusAIAuto"/> Générer aussi le titre Facebook avec Groq après récupération de l’article (envoi volontaire du texte à Groq).</label>'+
-'<div class="tvplus-ai-actions"><button type="button" id="tvplusAIRun">Proposer avec ChatGPT</button><button type="button" id="tvplusAICopy">Copier le résultat</button></div>'+
+'<input type="checkbox" id="tvplusAIAuto" hidden/>'+
+'<div class="tvplus-ai-actions"><button type="button" id="tvplusAIRun">Proposer avec Groq</button><button type="button" id="tvplusAICopy">Copier le résultat</button></div>'+
 '<p id="tvplusAIStatus" role="status" class="studio-note"></p><div id="tvplusAIChoices"></div>'+
 '<label>Texte proposé (modifiable)<textarea id="tvplusAIText" rows="4" spellcheck="true"></textarea></label>'+
 '<button type="button" id="tvplusAIApply">Appliquer dans le champ sélectionné</button>'+
 '<p class="studio-note">Suggestions à relire. Pas de publication automatique ni de vérification des faits sur Internet. Les limites d’utilisation Groq s’appliquent.</p></div>';
-const target=$("studioShortenerPanel");
-if(target?.parentElement===caption)target.insertAdjacentElement("beforebegin",panel);
-else caption.append(panel);
+const advanced=$("studioCaptionAdvanced");
+if(advanced)advanced.append(panel);else caption.append(panel);
 const css=document.createElement("style");
 css.id="tvplus-ai-style";
 css.textContent=".tvplus-groq-assistant{background:#13243a;color:#f2f6ff;border:1px solid #496281;border-radius:12px;margin:12px 0;overflow:hidden}"+
@@ -60,7 +59,7 @@ function requestData(name){
  if(!subject&&!body)throw Error("Saisissez un titre ou récupérez le contenu de l’article.");
  // For a headline request, send the ACTUAL article, not merely a duplicate of its title.
  return {task:name,title:headlineTask&&official?official:subject,
-  article:needsArticle||headlineTask?body:(scope.value==="article"?body:source()),
+  article:(needsArticle||headlineTask?body:(scope.value==="article"?body:source())).slice(0,12000),
   format:kind.value||"lire",tone:$("tvplusAITone").value,language:$("tvplusAILanguage").value};
 }
 function show(result){
@@ -127,7 +126,7 @@ $("tvplusAICopy").addEventListener("click",async()=>{
  catch(_){output.focus();output.select();stat.textContent="Sélectionnez le texte pour le copier."}
 });
 auto.addEventListener("change",()=>{try{sessionStorage.setItem("tvplus-ai-auto",auto.checked?"1":"0")}catch(_){}});
-document.addEventListener("tvplus:article-ready",()=>{if(auto.checked&&kind.value==="lire")run("titre_court",true)});
+// Article import now generates the caption directly with Groq.
 kind.addEventListener("change",()=>{lastSuggestionFormat=null;choices.replaceChildren();output.value="";stat.textContent="Format changé : relancez une génération adaptée.";});
 panel.addEventListener("toggle",async()=>{
  if(!panel.open)return;
