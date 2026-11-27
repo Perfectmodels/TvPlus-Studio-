@@ -403,7 +403,7 @@ dialog:not([open]) { display: none !important; }
 
 
 <div class="section-label"><span class="section-index">A</span><span>Texte de l’affiche</span></div><div class="field field-tight" id="categoryField"><label class="field-label" for="category">Catégorie TV+ Afrique <span class="hint">11 rubriques officielles</span></label><div class="tvplus-category-selector"><select class="input" id="category" aria-label="Sélectionner une catégorie du site TV+ Afrique"><option value="CULTURE">Culture</option><option value="ÉCONOMIE" selected>Économie</option><option value="ÉDUCATION">Éducation</option><option value="ENVIRONNEMENT">Environnement</option><option value="INTERNATIONAL">International</option><option value="JUSTICE">Justice</option><option value="FAIT DIVERS">Fait divers</option><option value="POLITIQUE">Politique</option><option value="SANTÉ">Santé</option><option value="SOCIÉTÉ">Société</option><option value="SPORT">Sport</option></select></div><p class="hint tvplus-category-hint">Rubriques relevées sur tvplusafrique.com</p></div>
-<div class="field field-tight"><label class="field-label" for="headline">Titre de l’affiche <span class="hint" id="lengthIndicator">63 caractères</span></label><textarea id="headline" placeholder="Écrivez ou collez le titre de l’affiche…" spellcheck="true">Pékin a accordé un don de 24 milliards de francs CFA au Gabon</textarea><p class="hint">Pour raccourcir le titre publié sur Facebook, ouvrez « Rédaction & brouillons → Légende Facebook ».</p></div>
+<div class="field field-tight"><label class="field-label" for="headline">Titre de l’affiche <span class="hint" id="lengthIndicator">63 caractères</span></label><textarea id="headline" placeholder="Écrivez ou collez le titre de l’affiche…" spellcheck="true">Pékin a accordé un don de 24 milliards de francs CFA au Gabon</textarea><p class="hint">Les outils de titre et de légende sont disponibles dans cet espace.</p></div>
 <details class="field field-tight word-panel" id="highlightArea" open=""><summary class="word-panel-summary"><span><b>Personnaliser les mots</b><small id="wordSummaryTip">Cliquez pour surligner en jaune</small></span><span aria-hidden="true" class="arrow-symbol">⌄</span></summary>
 <div aria-label="Action lors d'un clic sur un mot" class="word-tools" role="group"><button aria-pressed="true" class="word-tool active" id="colorTool" type="button">● Surligner en jaune</button><button aria-pressed="false" class="word-tool" id="sizeTool" type="button">↕ Régler la taille</button><button class="clear-words" id="resetMarkBtn" title="Retirer tous les surlignages" type="button">Effacer le jaune</button></div>
 <div aria-label="Mots du titre modifiables" class="word-picker" id="tokens"></div>
@@ -963,7 +963,7 @@ document.querySelector('.preview-meta').textContent='1:1 · rendu en direct';
  }
  function resetPosition(){crop.zoom=100;crop.dx=0;crop.dy=0;el('cropZoom').value='100';el('cropZoomLabel').textContent='100 %';redraw();}
  function loaded(img,name){crop.image=img;crop.filename=(name||'tvplus-photo').replace(/\.[^.]+$/,'').replace(/[^a-z0-9_-]/gi,'-').slice(0,60)||'tvplus-photo';el('cropFilename').textContent=name||'Photo de l’affiche';el('cropExport').disabled=false;el('cropApply').disabled=false;resetPosition();}
- el('openCropTool').addEventListener('click',()=>{el('cropUsePoster').disabled=!state.image||state.sample;dlg.showModal();redraw();});
+ el('openCropTool').addEventListener('click',()=>{el('cropUsePoster').disabled=!state.image||state.sample;if(!dlg.open){if(dlg.classList.contains('creation-inline'))dlg.show();else dlg.showModal();}if(state.image&&!state.sample)loaded(state.image,el('photoName').textContent||'photo-affiche');else redraw();});
  el('cropClose').addEventListener('click',()=>dlg.close());
  dlg.addEventListener('close',()=>crop.drag=null);
  el('cropInput').addEventListener('change',e=>{const file=e.target.files?.[0];if(!file)return;
@@ -980,7 +980,7 @@ document.querySelector('.preview-meta').textContent='1:1 · rendu en direct';
  canvas.addEventListener('keydown',e=>{const steps={ArrowLeft:[-10,0],ArrowRight:[10,0],ArrowUp:[0,-10],ArrowDown:[0,10]};if(!crop.image||!steps[e.key])return;e.preventDefault();crop.dx+=steps[e.key][0]*(e.shiftKey?3:1);crop.dy+=steps[e.key][1]*(e.shiftKey?3:1);redraw();});
  document.querySelectorAll('[data-crop-step]').forEach(btn=>btn.addEventListener('click',()=>{if(!crop.image)return;const vectors={left:[-20,0],right:[20,0],up:[0,-20],down:[0,20]};const [dx,dy]=vectors[btn.dataset.cropStep];crop.dx+=dx;crop.dy+=dy;redraw();}));
  el('cropExport').addEventListener('click',()=>{if(!crop.image)return;redraw();canvas.toBlob(blob=>{if(!blob){alert('Impossible de créer le fichier JPG.');return;}const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=crop.filename+'-1200x600.jpg';document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),5000);},'image/jpeg',0.94);});
- el('cropApply').addEventListener('click',async()=>{if(!crop.image)return;redraw();try{const img=await loadImage(canvas.toDataURL('image/png'));state.image=img;state.sample=false;state.zoom=100;state.dx=0;state.dy=0;el('zoom').value='100';el('zoomLabel').textContent='100 %';el('photoName').textContent='Recadrage 1200 × 600';draw();dlg.close();}catch(e){alert('Impossible de transférer le recadrage dans l’affiche.');}});
+ el('cropApply').addEventListener('click',async()=>{if(!crop.image)return;redraw();try{const img=await loadImage(canvas.toDataURL('image/png'));state.image=img;state.sample=false;state.zoom=100;state.dx=0;state.dy=0;el('zoom').value='100';el('zoomLabel').textContent='100 %';el('photoName').textContent='Recadrage 1200 × 600';draw();window.TVPlusEditorial?.scheduleSave();dlg.close();}catch(e){alert('Impossible de transférer le recadrage dans l’affiche.');}});
  redraw();
 })();
 </script>
@@ -1242,7 +1242,7 @@ document.querySelector('.preview-meta').textContent='1:1 · rendu en direct';
  async function outputImage(){if(!current.output)return null;return await loadImage(current.output.toDataURL('image/png'));}
  async function sendToPoster(){if(!current.output||current.busy)return;
    try{const img=await outputImage();state.image=img;state.sample=false;state.zoom=100;state.dx=0;state.dy=0;
-     $('zoom').value='100';$('zoomLabel').textContent='100 %';$('photoName').textContent=`Photo améliorée · ${dims(img)} px`;draw();dlg.close();
+     $('zoom').value='100';$('zoomLabel').textContent='100 %';$('photoName').textContent=`Photo améliorée · ${dims(img)} px`;draw();window.TVPlusEditorial?.scheduleSave();dlg.close();
    }catch(err){status('Impossible de transférer l’image dans l’affiche.','error');}
  }
  async function sendToCrop(){if(!current.output||current.busy)return;
@@ -1250,7 +1250,7 @@ document.querySelector('.preview-meta').textContent='1:1 · rendu en direct';
    catch(err){status('Impossible de transférer l’image au recadrage.','error');}
  }
  $('openEnhanceTool').addEventListener('click',()=>{
-   $('enhanceUsePoster').disabled=!state.image||state.sample;dlg.showModal();drawCompare();
+   $('enhanceUsePoster').disabled=!state.image||state.sample;if(!dlg.open){if(dlg.classList.contains('creation-inline'))dlg.show();else dlg.showModal();}if(state.image&&!state.sample&&current.source!==state.image)loadSourceImage(state.image,$('photoName').textContent||'photo-affiche');else drawCompare();
  });
  $('enhanceClose').addEventListener('click',()=>{current.cancel=true;dlg.close();});
  dlg.addEventListener('close',()=>current.cancel=true);
@@ -1314,5 +1314,6 @@ document.querySelector('.preview-meta').textContent='1:1 · rendu en direct';
 <script src="/studio-pastille-framing.js" defer></script>
 <script src="/studio-v2-bridge.js" defer></script>
 <script src="/studio-video-branding.js" defer></script>
+<script src="/studio-integrated-creation.js" defer></script>
 </body>
 </html>

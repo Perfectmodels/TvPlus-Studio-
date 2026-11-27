@@ -354,13 +354,15 @@ function tab(key){
 function show(key="caption"){
  const workspace=document.querySelector(".workspace");
  if(!workspace){tab(key);if(!dlg.open)dlg.showModal();return;}
- if(dlg.parentElement!==workspace)workspace.append(dlg);
+ const mount=document.getElementById("creationEditorialSlot")||workspace;
+ if(dlg.parentElement!==mount)mount.append(dlg);
  dlg.classList.add("studio-inline");
  workspace.dataset.workflowPanel="editorial";
  tab(key);
  if(!dlg.open)dlg.show();
  document.dispatchEvent(new CustomEvent("tvplus:workflow-stage",{detail:{stage:key}}));
- if(window.matchMedia("(max-width:850px)").matches)
+ if(mount!==workspace)requestAnimationFrame(()=>mount.scrollIntoView({block:"nearest",behavior:"instant"}));
+ else if(window.matchMedia("(max-width:850px)").matches)
   requestAnimationFrame(()=>window.scrollTo({top:0,behavior:"instant"}));
 }
 function closeEditorial(){
