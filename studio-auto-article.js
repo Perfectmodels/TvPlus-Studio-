@@ -33,12 +33,14 @@ function officialShort(url){try{const u=new URL(url);return u.hostname==="l.tvpl
 const advanced=document.createElement("details");advanced.id="studioCaptionAdvanced";advanced.innerHTML="<summary>Réglages avancés et retouches manuelles</summary>";
 section.append(advanced);
 const aiProposal=section.querySelector(".studio-title-assist [data-generate]")?.closest(".studio-title-assist");
+if(aiProposal)$("studioFormatOnlyTitle")?.insertAdjacentElement("afterend",aiProposal);
+const manualLink=link.closest("label");if(manualLink)advanced.append(manualLink);
 for(const node of [$("studioCaptionTitleBlock"),$("studioArticleHeadlineTool"),$("studioFrenchTitleAssist"),$("studioCaptionIntro")?.closest("label"),section.querySelector(".studio-hashtag-box"),$("studioCaptionRefresh")])if(node)advanced.append(node);
 const subtitle=section.querySelector(".studio-tool-subtitle");if(subtitle)subtitle.textContent="Légende prête à copier · modifiable";
 const heading=section.querySelector(":scope > p.studio-note");if(heading)heading.textContent="Choisissez un format, préparez la légende et copiez-la.";
 function visibility(){
  const active=mode.value==="lire";details.hidden=!active;group.style.gridTemplateColumns="1fr";
- const label=link.closest("label");if(label)label.hidden=true;
+ const label=link.closest("label");if(label)label.hidden=!active;
  const intro=$("studioCaptionIntro")?.closest("label");if(intro)intro.hidden=!active;
  if(aiProposal)aiProposal.hidden=active;
  if(!active)advanced.open=false;
