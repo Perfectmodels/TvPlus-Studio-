@@ -1,13 +1,13 @@
-/* TV+ Afrique — rédaction assistée avec OpenAI. Clé exclusivement sur Vercel. */
+/* TV+ Afrique — rédaction assistée avec Groq. Clé exclusivement sur Vercel. */
 (function(){
 "use strict";
 const $=id=>document.getElementById(id);
 const dlg=$("studioEditorialDialog"),caption=dlg?.querySelector('[data-toolpanel="caption"]');
 const kind=$("studioCaptionType");
 if(!dlg||!caption||!kind)return;
-const panel=document.createElement("details");panel.id="tvplusOpenAIPanel";panel.className="tvplus-openai-assistant";
+const panel=document.createElement("details");panel.id="tvplusGroqPanel";panel.className="tvplus-groq-assistant";
 panel.innerHTML='<summary><strong>Assistant ChatGPT · Rédaction</strong><span>IA</span></summary>'+
-'<div class="tvplus-ai-inner"><p id="tvplusAIConnection" role="status" class="studio-note">Vérifier la connexion OpenAI…</p>'+
+'<div class="tvplus-ai-inner"><p id="tvplusAIConnection" role="status" class="studio-note">Vérifier la connexion Groq…</p>'+
 '<div class="tvplus-ai-two"><label>Travail demandé<select id="tvplusAITask">'+
 '<option value="titre_court">Titre Facebook depuis l’article</option>'+
 '<option value="correction">Corriger orthographe et grammaire</option><option value="reformulation">Reformuler le titre</option>'+
@@ -18,20 +18,20 @@ panel.innerHTML='<summary><strong>Assistant ChatGPT · Rédaction</strong><span>
 '<label>Texte à modifier<select id="tvplusAIScope"><option value="title">Titre de la légende</option><option value="article">Contenu de l’article</option><option value="caption">Légende complète</option></select></label></div>'+
 '<div class="tvplus-ai-two"><label>Ton<select id="tvplusAITone"><option value="journalistique">Journalistique</option><option value="neutre">Neutre</option><option value="institutionnel">Institutionnel</option><option value="dynamique">Dynamique</option><option value="factuel">Factuel</option></select></label>'+
 '<label>Langue<select id="tvplusAILanguage"><option value="fr">Français</option><option value="en">Anglais</option><option value="es">Espagnol</option><option value="pt">Portugais</option></select></label></div>'+
-'<label class="tvplus-ai-check"><input type="checkbox" id="tvplusAIAuto"/> Générer aussi le titre Facebook avec OpenAI après récupération de l’article (envoi volontaire du texte à OpenAI).</label>'+
+'<label class="tvplus-ai-check"><input type="checkbox" id="tvplusAIAuto"/> Générer aussi le titre Facebook avec Groq après récupération de l’article (envoi volontaire du texte à Groq).</label>'+
 '<div class="tvplus-ai-actions"><button type="button" id="tvplusAIRun">Proposer avec ChatGPT</button><button type="button" id="tvplusAICopy">Copier le résultat</button></div>'+
 '<p id="tvplusAIStatus" role="status" class="studio-note"></p><div id="tvplusAIChoices"></div>'+
 '<label>Texte proposé (modifiable)<textarea id="tvplusAIText" rows="4" spellcheck="true"></textarea></label>'+
 '<button type="button" id="tvplusAIApply">Appliquer dans le champ sélectionné</button>'+
-'<p class="studio-note">Suggestions à relire. Pas de publication automatique ni de vérification des faits sur Internet. L’API OpenAI est facturée à l’usage.</p></div>';
+'<p class="studio-note">Suggestions à relire. Pas de publication automatique ni de vérification des faits sur Internet. Les limites d’utilisation Groq s’appliquent.</p></div>';
 const target=$("studioShortenerPanel");
 if(target?.parentElement===caption)target.insertAdjacentElement("beforebegin",panel);
 else caption.append(panel);
 const css=document.createElement("style");
 css.id="tvplus-ai-style";
-css.textContent=".tvplus-openai-assistant{background:#13243a;color:#f2f6ff;border:1px solid #496281;border-radius:12px;margin:12px 0;overflow:hidden}"+
-".tvplus-openai-assistant>summary{cursor:pointer;padding:12px;display:flex;align-items:center;justify-content:space-between;gap:9px}"+
-".tvplus-openai-assistant>summary strong{font-size:13px}.tvplus-openai-assistant>summary span{color:#151e2d;background:#ffca39;border-radius:6px;font-size:10px;font-weight:800;padding:5px 7px}"+
+css.textContent=".tvplus-groq-assistant{background:#13243a;color:#f2f6ff;border:1px solid #496281;border-radius:12px;margin:12px 0;overflow:hidden}"+
+".tvplus-groq-assistant>summary{cursor:pointer;padding:12px;display:flex;align-items:center;justify-content:space-between;gap:9px}"+
+".tvplus-groq-assistant>summary strong{font-size:13px}.tvplus-groq-assistant>summary span{color:#151e2d;background:#ffca39;border-radius:6px;font-size:10px;font-weight:800;padding:5px 7px}"+
 ".tvplus-ai-inner{padding:0 12px 13px;display:grid;gap:10px}.tvplus-ai-two{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}"+
 ".tvplus-ai-inner label{display:grid;gap:5px;font-size:11px;color:#d4e2f4;font-weight:650}.tvplus-ai-two select,.tvplus-ai-inner textarea{width:100%;min-width:0;border:1px solid #536b86;background:#0d1b2d;color:#fff;border-radius:8px;padding:10px;font:inherit}"+
 ".tvplus-ai-check{display:flex!important;align-items:flex-start;gap:9px!important;line-height:1.5;font-weight:500!important}.tvplus-ai-check input{width:18px;height:18px;flex:none}"+
@@ -100,7 +100,7 @@ async function run(name,automatic=false){
  try{
   const res=await fetch("/api/editorial-ai",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(input),cache:"no-store"});
   const data=await res.json().catch(()=>({}));
-  if(!res.ok)throw Error(data.error||"Erreur OpenAI.");
+  if(!res.ok)throw Error(data.error||"Erreur Groq.");
   if(kind.value!==input.format){stat.textContent="Le format a changé durant l’analyse. Relancez la génération.";return;}
   show(data.result);lastSuggestionFormat=input.format;
   if(automatic){
@@ -114,7 +114,7 @@ async function run(name,automatic=false){
    stat.textContent="Titre IA et hashtags appliqués à la légende. La Pastille n’a pas changé.";
   }
  }catch(e){
-  const message=e.message||"OpenAI indisponible.";
+  const message=e.message||"Groq indisponible.";
   stat.textContent=message+(automatic?" Le titre provisoire issu de l’article est conservé.":"");
   if(automatic){const notice=$("studioShortenStatus");if(notice)notice.textContent=message+" Titre provisoire conservé; vous pouvez le modifier manuellement."}
  }
@@ -133,8 +133,8 @@ panel.addEventListener("toggle",async()=>{
  if(!panel.open)return;
  const target=$("tvplusAIConnection");
  try{const r=await fetch("/api/editorial-ai",{cache:"no-store"});const x=await r.json();
-  target.textContent=x.configured?"OpenAI est configuré côté serveur. Les appels IA sont facturés à l’usage.":"La clé OPENAI_API_KEY manque sur Vercel.";
- }catch(_){target.textContent="Service OpenAI indisponible; les outils locaux restent accessibles."}
+  target.textContent=x.configured?"Groq est configuré côté serveur.":"La clé GROQ_API_KEY manque sur Vercel.";
+ }catch(_){target.textContent="Service Groq indisponible; les outils locaux restent accessibles."}
 });
-window.TVPlusOpenAI={run,version:"1.0"};
+window.TVPlusGroq={run,version:"1.0"};
 })();

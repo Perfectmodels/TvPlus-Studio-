@@ -1,0 +1,29 @@
+name: Studio Groq checks
+on:
+  pull_request:
+    paths:
+      - 'api/editorial-ai.js'
+      - 'studio-*.js'
+      - 'index.html'
+      - 'tests/groq-editorial.test.cjs'
+      - '.github/workflows/studio-groq-tests.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check scripts
+        run: |
+          node --check api/editorial-ai.js
+          node --check studio-groq-editorial.js
+          node --check studio-ai-everywhere.js
+          node --check studio-reportage-titles.js
+          node --check studio-auto-article.js
+      - name: Test editorial routing with mocked Groq
+        run: node --test tests/groq-editorial.test.cjs

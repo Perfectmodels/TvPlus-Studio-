@@ -265,9 +265,9 @@
     suggestions.replaceChildren();
   });
   function alsoSuggestWithAI(){
-    const assistant=window.TVPlusOpenAI;
+    const assistant=window.TVPlusGroq;
     if(!assistant?.run)return;
-    const panel=document.getElementById("tvplusOpenAIPanel");
+    const panel=document.getElementById("tvplusGroqPanel");
     if(panel)panel.open=true;
     assistant.run("reformulation");
   }

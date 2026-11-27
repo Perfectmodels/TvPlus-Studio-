@@ -66,7 +66,7 @@ button.addEventListener("click",async event=>{
   $("studioGenerateHashtags")?.click();
   const articleTool=$("studioArticleHeadlineTool");if(articleTool)articleTool.open=true;
   source.textContent="Titre officiel de l’article : "+article.title;
-  notify("Article et lien court récupérés. "+(out.source==="extractif"?"Titre provisoire extrait du contenu, à relire.":"Titre officiel conservé en attendant une reformulation.")+" Les suggestions IA apparaissent dans l’assistant si OpenAI est disponible.");
+  notify("Article et lien court récupérés. "+(out.source==="extractif"?"Titre provisoire extrait du contenu, à relire.":"Titre officiel conservé en attendant une reformulation.")+" Les suggestions IA apparaissent dans l’assistant si Groq est disponible.");
   document.dispatchEvent(new CustomEvent("tvplus:article-ready",{detail:{url:STATE.current.url,title:STATE.current.title,shortUrl:STATE.current.shortUrl}}));
  }catch(e){notify(e.message||"Impossible de préparer la légende.")}
  finally{button.disabled=false;button.textContent=originalLabel}

@@ -1,4 +1,4 @@
-/* TV+ Studio — contextual OpenAI assistant and opt-in photo editing. */
+/* TV+ Studio — contextual Groq assistant and opt-in photo editing. */
 (function(){
 'use strict';
 const $=id=>document.getElementById(id);
@@ -12,7 +12,7 @@ const TASKS=[
  ['photo_description','Description et texte alternatif photo']
 ];
 const dialog=document.createElement('aside');dialog.className='ai-universal';dialog.id='tvplusAssistantPanel';dialog.hidden=true;
-dialog.setAttribute('role','dialog');dialog.setAttribute('aria-modal','false');dialog.setAttribute('aria-label','Assistant OpenAI');
+dialog.setAttribute('role','dialog');dialog.setAttribute('aria-modal','false');dialog.setAttribute('aria-label','Assistant Groq');
 dialog.innerHTML=`<div class="ai-universal-header"><div><strong>Assistant IA TV+ Studio</strong><small>Rédaction, affiches, légendes, photos</small></div><button id="aiUniversalClose" type="button" aria-label="Fermer">×</button></div>
 <div class="ai-universal-inner">
 <label>Module à traiter<select id="aiUniversalScope">
@@ -22,11 +22,11 @@ dialog.innerHTML=`<div class="ai-universal-header"><div><strong>Assistant IA TV+
 <option value="photo">Photographie</option></select></label>
 <label>Assistance souhaitée<select id="aiUniversalTask"></select></label>
 <label>Consigne ou contexte (facultatif)<textarea id="aiUniversalContext" rows="3" maxlength="2000" placeholder="Informations vérifiées ou précision sur le résultat attendu"></textarea></label>
-<button class="ai-action-main" id="aiUniversalRun" type="button">Proposer avec OpenAI</button>
+<button class="ai-action-main" id="aiUniversalRun" type="button">Proposer avec Groq</button>
 <div id="aiUniversalStatus" role="status"></div><div id="aiUniversalChoices"></div>
 <label>Proposition modifiable<textarea id="aiUniversalResult" rows="5"></textarea></label>
 <div class="ai-universal-row"><button id="aiUniversalApply" type="button">Appliquer à ce module</button><button id="aiUniversalCopy" type="button">Copier</button></div>
-<p>Les résultats doivent être vérifiés avant publication. Aucun texte ou visuel n’est envoyé à OpenAI sans lancement volontaire d’une action.</p>
+<p>Les résultats doivent être vérifiés avant publication. Aucun texte ou visuel n’est envoyé à Groq sans lancement volontaire d’une action.</p>
 </div>`;
 document.body.append(dialog);
 const task=$('aiUniversalTask'),scope=$('aiUniversalScope'),stat=$('aiUniversalStatus'),result=$('aiUniversalResult'),choices=$('aiUniversalChoices');
@@ -89,7 +89,7 @@ $('aiUniversalRun').addEventListener('click',async()=>{
  if(name==='photo_description'&&scope.value!=='photo')scope.value='photo';
  if(name!=='photo_description'&&!title&&!body){stat.textContent='Aucun texte à analyser dans ce module.';return}
  if(['titre_court','resume','angles','seo','article','vigilance'].includes(name)&&fromArticle.length<80){stat.textContent='Récupérez d’abord un article complet pour cette analyse.';return}
- busy=true;$('aiUniversalRun').disabled=true;stat.textContent='Analyse OpenAI…';
+ busy=true;$('aiUniversalRun').disabled=true;stat.textContent='Analyse Groq…';
  try{
   const extra=String($('aiUniversalContext').value||'').trim();
   const photo=name==='photo_description'?posterImage():undefined;
@@ -97,7 +97,7 @@ $('aiUniversalRun').addEventListener('click',async()=>{
   const req={task:name,title,article:(body+(extra?'\nContexte communiqué par le journaliste : '+extra:'')).slice(0,12000),format:requestFormat,tone:'journalistique',language:'fr'};
   if(photo)req.image=photo;
   const r=await fetch('/api/editorial-ai',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(req),cache:'no-store'});
-  const payload=await r.json().catch(()=>({}));if(!r.ok)throw Error(payload.error||'Erreur OpenAI.');
+  const payload=await r.json().catch(()=>({}));if(!r.ok)throw Error(payload.error||'Erreur Groq.');
   const data=payload.result;
    if(format()!==requestFormat){stat.textContent='Le format a changé pendant la génération. Relancez pour le format actif.';return;}
    last={name,data,format:requestFormat};
@@ -133,32 +133,16 @@ buttonAfter('studioAlertTitleInput','IA · titre de l’alerte','facebook','refo
 buttonAfter('studioArticleBody','Assistant IA : améliorer le contenu','article','article');
 buttonAfter('details','Assistant IA : analyser l’angle','angle','decryptage');
 const quality=document.querySelector('[data-toolpanel="quality"]');if(quality){
- const b=document.createElement('button');b.className='ai-inline-btn';b.type='button';b.textContent='Contrôle qualité OpenAI';
+ const b=document.createElement('button');b.className='ai-inline-btn';b.type='button';b.textContent='Contrôle qualité Groq';
  quality.prepend(b);b.addEventListener('click',()=>open('poster','controle_qualite'));
 }
-const photoButton=$('tvplusAIPhotoRun'),photoStatus=$('tvplusAIPhotoStatus');
-if(photoButton&&window.TVPlusPhotoEnhance){
- photoButton.addEventListener('click',async()=>{
-  if(photoButton.disabled)return;
-  photoButton.disabled=true;photoStatus.textContent='Retouche OpenAI en cours…';
-  try{
-   const tool=window.TVPlusPhotoEnhance,image=tool.sourceDataURL();
-   const req={image,mode:$('tvplusAIPhotoPreset').value,instructions:String($('tvplusAIPhotoInstructions').value||'').trim()};
-   const r=await fetch('/api/image-ai',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(req)});
-   const payload=await r.json().catch(()=>({}));if(!r.ok)throw Error(payload.error||'Retouche indisponible.');
-   await tool.accept(payload.image);
-   photoStatus.textContent='Retouche disponible dans la comparaison avant/après. Vérifiez le résultat, puis choisissez Utiliser dans l’affiche ou Exporter.';
-  }catch(e){photoStatus.textContent=e.message||'Retouche impossible. Les outils locaux restent disponibles.'}
-  finally{photoButton.disabled=false;}
- });
-}
-const cropAI=$('tvplusCropToOpenAI');if(cropAI){
+const cropAI=$('tvplusCropToGroq');if(cropAI){
  cropAI.addEventListener('click',async()=>{
   const canvas=$('cropCanvas'),dlg=$('cropDialog');
   if($('cropExport')?.disabled){alert('Importez une photo dans le recadrage.');return}
   const data=canvas.toDataURL('image/jpeg',.87);dlg.close();$('openEnhanceTool')?.click();
   await window.TVPlusPhotoEnhance?.loadFromDataURL(data,'photo-recadree');
-  $('tvplusAIPhotoPreset').focus();
+  $('enhanceAuto')?.focus();
  });
 }
 window.TVPlusUniversalAI={open,close,version:'2.0'};
