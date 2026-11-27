@@ -68,11 +68,11 @@ for(const [id,label] of [["openCropTool","Recadrer la photo"],["openEnhanceTool"
 photoActions.append(button("Cadrage et dégradé",()=>{
  const inspector=workspace.querySelector(".production-inspector");
  if(inspector){inspector.querySelector('[data-inspect="photo"]')?.click();scroll(inspector);}
- else{const framing=$("pastillePhotoFraming")||$("mediaDetails");if(framing){if(framing.tagName==="DETAILS")framing.open=true;scroll(framing);}}
+ else{const framing=(format()==="pastille"?$("pastillePhotoFraming"):null)||$("mediaDetails");if(framing){if(framing.tagName==="DETAILS")framing.open=true;scroll(framing);}}
 }));
 photoSlot.prepend(photoActions);
 const rail=make("nav","creation-tool-rail");rail.setAttribute("aria-label","Outils de cette création");
-rail.append(button("Titre",()=>{updateMode();scroll(titleSlot);$("headline").focus({preventScroll:true});}),button("Image",()=>scroll(photoField)),button("Recadrer",()=>$("openCropTool")?.click()),button("Améliorer",()=>$("openEnhanceTool")?.click()),button("Légende",()=>window.TVPlusEditorial?.show("caption")),button("Exporter",()=>window.TVPlusEditorial?.show("quality")));
+rail.append(button("Titre",()=>{updateMode();scroll(titleSlot);$("headline").focus({preventScroll:true});}),button("Typographie",()=>{const i=workspace.querySelector(".production-inspector");if(i){i.querySelector('[data-inspect="text"]')?.click();requestAnimationFrame(()=>scroll(i));}else{const d=$("appearanceDetails");if(d){d.open=true;scroll(d);}}}),button("Image",()=>scroll(photoField)),button("Recadrer",()=>$("openCropTool")?.click()),button("Améliorer",()=>$("openEnhanceTool")?.click()),button("Légende",()=>window.TVPlusEditorial?.show("caption")),button("Exporter",()=>window.TVPlusEditorial?.show("quality")));
 panel.querySelector(".editor-heading")?.after(rail);
 const assistant=$("tvplusAssistantPanel");if(assistant){
  const slot=make("div","creation-tool-slot");slot.id="creationAssistantSlot";titleSlot.after(slot);slot.append(assistant);
