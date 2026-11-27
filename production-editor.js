@@ -23,7 +23,7 @@ document.addEventListener('studio-drafts-ready', async event => {
     }
     const editor=document.querySelector('.format-navbar');
     const bar=document.createElement('section');bar.className='production-bar';
-    bar.innerHTML='<a href="productions.html">Mes productions</a><strong></strong><button data-action="subject">Sujet</button><button data-action="poster">Affiche</button><button data-action="video">Vidéo</button><button data-action="caption">Légende</button><button data-action="jpg">Exporter JPG</button>';
+    bar.innerHTML='<a href="productions.html">← Studio</a><strong></strong><button data-action="poster">Affiche</button><button data-action="video">Vidéo</button><button data-action="caption">Légende</button><button data-action="jpg">Exporter JPG</button><button class="compact-preview" data-action="preview">Aperçu</button><details class="editor-tools"><summary>Outils</summary><div><button data-action="subject">Fiche du sujet</button><button data-tool="enhance">Améliorer la photo</button><button data-tool="crop">Recadrer la photo</button><button data-tool="quality">Vérifier et exporter</button></div></details>';
     editor.before(bar);document.body.classList.add('production-active');
     const style=document.createElement('style');style.textContent='.production-active .format-navbar,.production-active .header-right,.production-active .flow-intro,.production-active [data-flow=drafts],.production-active [data-flow=poster].flow-desktop-btn{display:none!important}.production-bar{display:flex;align-items:center;flex-wrap:wrap;gap:8px;padding:12px clamp(12px,3vw,48px);background:#132139;color:white}.production-bar strong{flex:1;min-width:100px;overflow-wrap:anywhere}.production-bar a{color:#ffcf4a}.production-bar button{background:#233751;color:white;border:1px solid #60738a;border-radius:8px;padding:8px 12px}.production-active .flow-desktop-nav{position:static}.production-active.video-only .workspace,.production-active.video-only .flow-desktop-nav,.production-active.video-only .mobile-dock{display:none!important}.production-active.video-only:has(#studioEditorialDialog[open]) .workspace{display:grid!important}';
     document.head.append(style);
@@ -31,7 +31,12 @@ document.addEventListener('studio-drafts-ready', async event => {
     if(!videoOnly)installPosterInspector();
     const heading=bar.querySelector('strong');
     function markView(view){for(const b of bar.querySelectorAll('[data-action]'))if(['poster','video','caption'].includes(b.dataset.action))b.setAttribute('aria-pressed',String(b.dataset.action===view));}
-    function title(){heading.textContent=project.subject+' · '+P.formats[project.format];document.title=project.subject+' · TV+ Studio';}
+    function title(){heading.textContent=project.subject||P.formats[project.format];document.title=heading.textContent+' · TV+ Studio';}
+    for(const id of ['headline','vsTitle'])$(id).addEventListener('change',async()=>{
+      if(project.autoTitle && (id==='headline'||videoOnly||!project.subject)){
+        try{await patch({subject:$(id).value.trim().slice(0,250)});title();}catch(err){P.report(err);}
+      }
+    });
     title();
     const dlg=$('videoStudio');let initialized=false, opening=false,writeTimer;
     const saveVideo=()=>initialized?patch({video:ProductionVideo.snapshot()}):Promise.resolve();
@@ -85,7 +90,7 @@ document.addEventListener('studio-drafts-ready', async event => {
         const latest=await P.get('projects',P.id);
         for(const kind of ['video','poster'])if(latest[kind+'Status'])review[kind+'Status']='À relire';
       }
-      await patch({subject:name.value.trim(),source:source.value.trim(),...review});title();
+      await patch({autoTitle:false,subject:name.value.trim(),source:source.value.trim(),...review});title();
       if(applyVideo.checked){
         if(initialized){$('vsTitle').value=project.subject;await saveVideo();}
         else if(project.video)await patch({video:{...project.video,fields:{...project.video.fields,vsTitle:project.subject}}});
@@ -95,8 +100,11 @@ document.addEventListener('studio-drafts-ready', async event => {
       if(apply.checked){input('headline',project.subject);await TVPlusEditorial.save();}}catch(err){P.report(err);}});
     bar.addEventListener('click',async e=>{
       const action=e.target.dataset.action;
+      if(e.target.matches('button'))bar.querySelector('details').open=false;
       try{
         if(e.target.matches('a')){e.preventDefault();await mediaWrites;await saveVideo();await TVPlusEditorial.save();location.href='productions.html';}
+        else if(e.target.dataset.tool){document.querySelector('.flow-desktop-nav [data-flow="'+e.target.dataset.tool+'"]')?.click();}
+        else if(action==='preview'){document.querySelector('.mobile-dock [data-flow=preview]')?.click();}
         else if(action==='subject'){name.value=project.subject;source.value=project.source||'';apply.checked=false;applyVideo.checked=false;applyCaption.checked=false;applyCaption.closest('label').hidden=$('studioCaptionType').value!=='lire';subject.returnValue='';subject.showModal();}
         else if(action==='jpg'){
           $('studioFormat').value='image/jpeg';

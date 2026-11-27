@@ -1,8 +1,6 @@
 <!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Mes productions · TV+ Studio</title><link rel="stylesheet" href="productions.css"><script defer src="production-store.js"></script><script defer src="production-home.js"></script></head>
-<body><header><strong>TV+ Studio</strong><a href="index.html?classique">Anciens brouillons</a></header><main>
-<nav aria-label="Studio"><button data-view="projects">Mes productions</button><button data-view="models">Modèles TV+</button><button data-view="media">Médiathèque</button></nav>
-<section id="projects"><div class="heading"><h1>Mes productions</h1><button id="newProject" class="primary">Nouvelle production</button></div><div class="grid" id="cards"></div></section>
-<section id="models" hidden><h1>Modèles TV+</h1><div id="modelCards" class="grid"></div></section>
-<section id="media" hidden><div class="heading"><h1>Médiathèque</h1><label class="primary">Importer un média<input hidden type="file" id="upload" accept="image/*,video/*" multiple></label></div><div id="assets" class="grid"></div></section>
-<dialog id="create"><form><h2>Nouvelle production</h2><label>Sujet<input id="subject" required maxlength="250" autofocus></label><label>Format éditorial<select id="format"></select></label><label>Média source<select id="source"><option value="">Importer plus tard</option></select></label><div class="heading"><button type="button" id="cancel">Annuler</button><button class="primary">Créer la production</button></div></form></dialog>
+<body><header><strong>TV+ Studio</strong><a href="#projects">Mes productions</a></header><main>
+<section id="models"><h1>Choisir un format</h1><p id="selection" hidden><span></span> <button id="clearAsset">Retirer</button></p><div id="modelCards" class="formats"></div></section>
+<section id="projects"><h2>Mes productions</h2><div class="grid" id="cards"></div><a href="index.html?classique">Ouvrir les anciens brouillons</a></section>
+<details id="media"><summary>Médiathèque</summary><label>Importer un média <input type="file" id="upload" accept="image/*,video/*" multiple></label><div id="assets" class="grid"></div></details>
 </main></body></html>
