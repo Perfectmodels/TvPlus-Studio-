@@ -130,6 +130,45 @@
     grid.style.gridTemplateColumns=simple?"1fr":"";
     suggestions.replaceChildren();status.textContent="";renderCaption();
   }
+  const assistant=document.createElement("section");
+  assistant.className="studio-title-assist";
+  assistant.innerHTML='<button type="button" class="studio-accent" data-generate>Proposer une légende avec l’IA</button><p role="status" aria-live="polite"></p><div hidden><label>Titre proposé<textarea rows="2"></textarea></label><label>Contexte proposé<textarea rows="2"></textarea></label><p data-tags></p><button type="button" data-apply>Utiliser cette proposition</button></div>';
+  captionSection.prepend(assistant);
+  const generate=assistant.querySelector("[data-generate]"),message=assistant.querySelector("[role=status]"),proposal=assistant.querySelector("div"),[newTitle,newIntro]=assistant.querySelectorAll("textarea");
+  let request=0,origin="";
+  function context(){
+    const type=kindNow(),linked=window.TVPlusAutoArticle?.current;
+    return {task:"legende",format:type,title:(storedType()?activeInput().value.trim()||source():linked?.title||captionTitle.value.trim()||source()).slice(0,500),article:(storedType()?formatFields[type].brief.value:($("studioArticleBody").value||linked?.body||$("studioCaptionIntro").value)).slice(0,12000)};
+  }
+  function clear(){request++;proposal.hidden=true;generate.disabled=false;message.textContent="";}
+  kind.addEventListener("change",clear);
+  generate.onclick=async()=>{
+    clear();const turn=request,input=context();
+    if(!input.title.trim()&&!input.article.trim()){message.textContent="Ajoutez un titre ou quelques faits pour générer la légende.";return;}
+    origin=JSON.stringify(input);generate.disabled=true;message.textContent="Rédaction en cours…";
+    try{
+      const response=await fetch("/api/editorial-ai",{method:"POST",headers:{"Content-Type":"application/json"},body:origin});
+      const data=await response.json();if(turn!==request)return;
+      if(!response.ok)throw Error(data.error||"Génération indisponible.");
+      if(JSON.stringify(context())!==origin){message.textContent="Le sujet a changé. Relancez la génération.";return;}
+      newTitle.value=data.result.title;newIntro.value=data.result.text;newIntro.parentElement.hidden=storedType();
+      const tags=assistant.querySelector("[data-tags]");tags.textContent=data.result.hashtags.map(x=>"#"+x.replace(/^#/,"")).join(" ");tags.hidden=storedType();
+      proposal.hidden=false;message.textContent="Proposition de "+data.provider+" à relire.";
+    }catch(error){if(turn===request)message.textContent=error.message;}
+    finally{if(turn===request)generate.disabled=false;}
+  };
+  assistant.querySelector("[data-apply]").onclick=()=>{
+    if(origin!==JSON.stringify(context())){clear();message.textContent="Le sujet a changé. Relancez la génération.";return;}
+    const value=newTitle.value.trim();
+    if(!value||(["lire","60secondes"].includes(kindNow())&&([...value].length>75||value.split(/\s+/).length>12))){message.textContent="Vérifiez le titre proposé (75 caractères et 12 mots maximum pour ce format).";newTitle.focus();return;}
+    applyTitle(value);
+    if(!storedType()){
+      for(const [field,text] of [["studioCaptionIntro",newIntro.value],["studioCaptionHashtags",assistant.querySelector("[data-tags]").textContent]]){
+        $(field).value=text;$(field).dispatchEvent(new Event("input",{bubbles:true}));
+      }
+    }
+    clear();message.textContent="Légende mise à jour. Vous pouvez la relire et la copier.";
+  };
   const commonErrors=new Map([
     ["reporatge","reportage"],["reporttage","reportage"],["imersion","immersion"],
     ["estudiantinne","estudiantine"],["étudiatine","estudiantine"],
