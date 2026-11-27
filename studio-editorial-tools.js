@@ -596,7 +596,7 @@ function generateCaption(){
 function prepareCaptionOnOpen(){
  // Update the default when the poster format changes, but keep a deliberately
  // selected Reportage / 60 secondes type when staying on the same poster.
- if(lastCaptionMode!==state.mode){
+ if(!Productions.id && lastCaptionMode!==state.mode){
   $("studioCaptionType").value=suggestedType();
   lastCaptionMode=state.mode;
  }

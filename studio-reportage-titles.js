@@ -138,7 +138,7 @@
   let request=0,origin="";
   function context(){
     const type=kindNow(),linked=window.TVPlusAutoArticle?.current;
-    return {task:"legende",format:type,title:(storedType()?activeInput().value.trim()||source():linked?.title||captionTitle.value.trim()||source()).slice(0,500),article:(storedType()?formatFields[type].brief.value:($("studioArticleBody").value||linked?.body||$("studioCaptionIntro").value)).slice(0,12000)};
+    return {task:"legende",format:type,title:(storedType()?activeInput().value.trim()||source()||$("vsTitle")?.value||"":linked?.title||captionTitle.value.trim()||source()).slice(0,500),article:(storedType()?formatFields[type].brief.value:($("studioArticleBody").value||linked?.body||$("studioCaptionIntro").value)).slice(0,12000)};
   }
   function clear(){request++;proposal.hidden=true;generate.disabled=false;message.textContent="";}
   kind.addEventListener("change",clear);
